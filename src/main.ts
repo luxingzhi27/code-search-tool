@@ -1,9 +1,10 @@
 import { createApp } from 'vue'
-import "./styles/style.scss"
 import "./styles/tailwind.css"
 import App from './App.vue'
 import './samples/node-api'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import 'element-plus/theme-chalk/dark/css-vars.css'
+import "./styles/style.scss"
 
 const app=createApp(App)
 
