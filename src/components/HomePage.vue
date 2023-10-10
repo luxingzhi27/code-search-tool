@@ -65,7 +65,7 @@ const programLanguages:Array<string>=['C','C++','Java','Python','JavaScript','Ru
 const question = ref('')
 const preferredLanguage = ref('python')
 const gptResponse=ref('这里空空如也~')
-const webSearchResults=ref([])
+const webSearchResults=ref([{id:1,name:'这里空空如也~',url:'https://www.baidu.com'}])
 
 // web search
 const webLoading=ref(false)
@@ -74,6 +74,7 @@ const webLoading=ref(false)
 const aiLoading=ref(false)
 const handleQuestionSearch = () => {
     aiLoading.value=true
+    webLoading.value=true
     let content=question.value+',请使用'+preferredLanguage.value
     getGptResponse({
         'messages':[
@@ -84,7 +85,16 @@ const handleQuestionSearch = () => {
         aiLoading.value=false
     })
 
-    webSearchResults.value=bingWebSearch(question.value)
+    bingWebSearch(question.value).then((res)=>{
+        if(res.length>0){
+            webSearchResults.value=res
+            webLoading.value=false
+        }else{
+            console.log('no result')
+            webLoading.value=false
+        }
+    })
+
 }
 
 

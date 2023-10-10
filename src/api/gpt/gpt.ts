@@ -2,7 +2,7 @@ import axios from 'axios'
 
 const api_secret_key='ae27403c9624903838b63b16f406931e'
 
-export const getGptResponse = (params) => {
+export const getGptResponse = (params:any) => {
     return axios({
         method:'post',
         url:'http://flag.smarttrot.com/index.php/api/v1/chat/completions',
