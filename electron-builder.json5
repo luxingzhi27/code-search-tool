@@ -3,9 +3,9 @@
  */
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "YourAppID",
+  "appId": "luxingzhi.code-search-tool",
   "asar": true,
-  "productName": "YourAppName",
+  "productName": "code-search-tool",
   "directories": {
     "output": "release/${version}"
   },
@@ -24,7 +24,8 @@
       {
         "target": "nsis",
         "arch": [
-          "x64"
+          "x64",
+          "arm64"
         ]
       }
     ],
@@ -38,7 +39,9 @@
   },
   "linux": {
     "target": [
-      "AppImage"
+      "AppImage",
+      "deb",
+      "rpm"
     ],
     "artifactName": "${productName}-Linux-${version}.${ext}"
   }

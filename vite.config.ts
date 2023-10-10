@@ -5,6 +5,11 @@ import electron from 'vite-plugin-electron'
 import renderer from 'vite-plugin-electron-renderer'
 import { notBundle } from 'vite-plugin-electron/plugin'
 import pkg from './package.json'
+import AutoImport from 'unplugin-auto-import/vite'
+import Components from 'unplugin-vue-components/vite'
+import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
+import {fileURLToPath,URL} from 'node:url'
+import ElementPlus from 'unplugin-element-plus/vite'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => {
@@ -16,6 +21,19 @@ export default defineConfig(({ command }) => {
 
   return {
     plugins: [
+      AutoImport({
+        resolvers: [ElementPlusResolver({
+          importStyle:'sass'
+        })],
+      }),
+      Components({
+        resolvers: [ElementPlusResolver({
+          importStyle:'sass'
+        })],
+      }),
+      ElementPlus({
+        useSource: true,
+      }),
       vue(),
       electron([
         {
@@ -73,6 +91,21 @@ export default defineConfig(({ command }) => {
       // Use Node.js API in the Renderer process
       renderer(),
     ],
+    resolve: {
+      alias:{
+        "@":fileURLToPath(new URL('./src',import.meta.url)),
+      },
+    },
+    css:{
+      postcss:{
+        plugins:[require('tailwindcss')],
+      },
+      preprocessorOptions: {
+        scss: {
+          additionalData: `@use "./src/styles/element/index.scss" as *;`,
+        },
+      },
+    },
     server: process.env.VSCODE_DEBUG && (() => {
       const url = new URL(pkg.debug.env.VITE_DEV_SERVER_URL)
       return {
