@@ -16,6 +16,7 @@ const sources={
     AI:"AI suggestions",
     WEB:"Web search"
 }
+
 const resultSource=ref(sources.AI)
 // web search
 const webLoading=ref(false)
@@ -94,26 +95,30 @@ const handleSelect = (key: string, keyPath: string[]) => {
                 <div class="w-full flex justify-center">
 
                     <!-- gpt view -->
-                    <transition name="slide">
-                        <el-card class="my-2.5" v-if="resultSource===sources.AI">
-                            <template #header>
-                                <span class="flex justify-start font-bold">AI suggestions</span>
+                    <el-card class="my-2.5 w-full" v-if="resultSource===sources.AI">
+                        <template #header>
+                            <span class="flex justify-start font-bold">AI suggestions</span>
+                        </template>
+                        <el-skeleton :rows="8" :loading="aiLoading" animated>
+                            <template #default>
+                                <GptResView  :text="gptResponse"></GptResView>
                             </template>
-                            <GptResView v-loading="aiLoading" :text="gptResponse"></GptResView>
-                        </el-card>
-                    </transition>
-
+                        </el-skeleton>
+                    </el-card>
+                    
                     <!-- web search -->
-                    <transition name="slide">
-                        <el-card class="my-2.5" v-if="resultSource===sources.WEB">
-                            <template #header>
-                                <span class="flex justify-start font-bold">Web search</span>
+                    <el-card class="my-2.5 w-full" v-if="resultSource===sources.WEB">
+                        <template #header>
+                            <span class="flex justify-start font-bold">Web search</span>
+                        </template>
+                        <el-skeleton :rows="8" :loading="webLoading" animated>
+                            <template #default>
+                                <div class="flex flex-col" v-loading="webLoading">
+                                    <Weblink v-for="(result,index) in webSearchResults" :key="index" :name="result.name" :snippet="result.snippet" :url="result.url"></Weblink>
+                                </div>
                             </template>
-                            <div class="flex flex-col" v-loading="webLoading">
-                                <Weblink v-for="(result,index) in webSearchResults" :key="index" :name="result.name" :snippet="result.snippet" :url="result.url"></Weblink>
-                            </div>
-                        </el-card>
-                    </transition>
+                        </el-skeleton>
+                    </el-card>
 
                 </div>
             </div>
@@ -137,26 +142,37 @@ const handleSelect = (key: string, keyPath: string[]) => {
   }
 }
 
-button {
+@keyframes fadeIn {
+    0% {
+     opacity: 0;
+     scale: 0.97;
+    }
+    100% {
+     opacity: 1;
+     scale: 1;
+    } 
+}
+
+@keyframes fadeOut {
+    0% {
+     opacity: 1;
+     scale: 1;
+    }
+    100% {
+     opacity: 0;
+     scale: 0.97;
+    } 
+}
+
+.button {
   animation: pulse 0.5s;
-  @apply px-3 py-1
 }
 
-el-input {
-  animation: pulse 0.5s;
+.el-input {
+  animation: fadeIn 0.5s;
 }
 
-.el-card {
-  width: 100%;
-}
-
-.slide-enter-active,
-.slide-leave-active {
-  transition: transform 0.5s;
-}
-
-.slide-enter,
-.slide-leave-to {
-    transform: translateX(100%);
+.el-card{
+    animation: fadeIn 0.4s ease-in-out;
 }
 </style>

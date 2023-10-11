@@ -45,9 +45,11 @@ h1 {
 button {
   border-radius: 8px;
   border: 1px solid transparent;
-  @apply py-5 px-2;
-  @apply text-xl;
-  font-size: 1em;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  padding-left: 8px;
+  padding-right: 8px;
+  font-size: 1 rem;
   font-weight: 500;
   font-family: inherit;
   background-color: #1a1a1a;
