@@ -43,12 +43,8 @@
                     <template #header>
                         <span class="flex justify-start font-bold">Web search</span>
                     </template>
-                    <div class="flex justify-start" v-loading="webLoading">
-                        <ul>
-                            <li v-for="result in webSearchResults" :key="result.id">
-                                <a :href="result.url" target="_blank">{{ result.name }}</a>
-                            </li>
-                        </ul>
+                    <div class="flex flex-col" v-loading="webLoading">
+                        <Weblink v-for="(result,index) in webSearchResults" :key="index" :name="result.name" :snippet="result.snippet" :url="result.url"></Weblink>
                     </div>
                 </el-card>
             </div>
@@ -60,12 +56,13 @@
 import { ref, watch } from 'vue'
 import { getGptResponse } from '../api/gpt/gpt'
 import {bingWebSearch} from '../api/bing/bingSearch'
+import Weblink from './Weblink.vue';
 
 const programLanguages:Array<string>=['C','C++','Java','Python','JavaScript','Rust','Go','TypeScript','Swift','Bash','Powershell']
 const question = ref('')
 const preferredLanguage = ref('python')
 const gptResponse=ref('这里空空如也~')
-const webSearchResults=ref([{id:1,name:'这里空空如也~',url:'https://www.baidu.com'}])
+const webSearchResults=ref([{snippet:'',name:'这里空空如也~',url:'https://www.baidu.com'}])
 
 // web search
 const webLoading=ref(false)
@@ -127,4 +124,4 @@ button {
 el-input {
   animation: pulse 0.5s;
 }
-</style>../api/bing/bingSearch
+</style>
