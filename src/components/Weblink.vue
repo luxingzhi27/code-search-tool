@@ -22,8 +22,14 @@ const handleLinkClick=(e:any)=>{
 </script>
 
 <template>
-    <div class="flex flex-col justify-start items-start my-2">
+    <div class="flex flex-col justify-start items-start my-2 class=web-link">
         <a v-on:click="handleLinkClick" :href="url" class="font-bold">{{ name }}</a>
-        <el-text  truncated class="w-full">{{ snippet }}</el-text>
+        <el-text class="w-full">{{ snippet }}</el-text>
     </div>
 </template>
+
+<style scoped>
+.web-link{
+    background-color: #1a1a1a;
+}
+</style>

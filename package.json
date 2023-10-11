@@ -24,6 +24,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@types/markdown-it": "^13.0.2",
     "@vitejs/plugin-vue": "^4.3.3",
     "electron": "^26.0.0",
     "electron-builder": "^24.6.3",
@@ -42,7 +43,11 @@
   "dependencies": {
     "7zip-bin": "^5.2.0",
     "@element-plus/icons-vue": "^2.1.0",
+    "@traptitech/markdown-it-katex": "^3.6.0",
     "axios": "^1.5.1",
-    "element-plus": "^2.3.14"
+    "element-plus": "^2.3.14",
+    "highlight.js": "^11.9.0",
+    "markdown-it": "^13.0.2",
+    "marked": "^9.1.0"
   }
 }
