@@ -1,7 +1,7 @@
 import axios from "axios"
 
 //分页获取
-export const searchRepo = (query:string,lang:string,page:number,perPage:number) => {
+export const githubSearchRepo = (query:string,lang:string,page:number,perPage:number) => {
   const url = `https://api.github.com/search/repositories`
   return axios({
     method:'get',

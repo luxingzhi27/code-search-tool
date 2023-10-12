@@ -14,7 +14,6 @@ const props=defineProps({
 const mdi = new MarkdownIt({
   linkify: true,
   highlight(code, language) {
-    console.log('code', code, 'language', language)
     const validLang = !!(language && hljs.getLanguage(language))
     if (validLang) {
       const lang = language ?? ''

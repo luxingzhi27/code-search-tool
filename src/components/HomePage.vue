@@ -2,14 +2,17 @@
 import { ref, watch } from 'vue'
 import { getGptResponse } from '../api/gpt/gpt'
 import {bingWebSearch} from '../api/bing/bingSearch'
+import {githubSearchRepo} from '../api/github/githubRepo'
 import Weblink from './Weblink.vue';
 import GptResView from './GptResView.vue';
+import GithubReposView from './GithubReposView.vue';
 
 const programLanguages:Array<string>=['C','C++','Java','Python','JavaScript','Rust','Go','TypeScript','Swift','Bash','Powershell']
 const question = ref('')
 const preferredLanguage = ref('python')
 const gptResponse=ref('这里空空如也~')
 const webSearchResults=ref([{snippet:'',name:'这里空空如也~',url:'https://www.baidu.com'}])
+const githubSearchResults=ref([{full_name:'',description:'',url:'',stargazers_count:0,updated_at:''}])
 
 // search results sources
 const sources={
@@ -47,6 +50,17 @@ const handleQuestionSearch = () => {
         }else{
             console.log('no result')
             webLoading.value=false
+        }
+    })
+
+    githubSearchRepo(question.value,preferredLanguage.value,1,10).then((res)=>{
+        if(res.length>0){
+            githubSearchResults.value=res
+            console.log(githubSearchResults.value)
+            githubLoading.value=false
+        }else{
+            console.log('github search repo no result')
+            githubLoading.value=false
         }
     })
 
@@ -132,12 +146,10 @@ const handleSelect = (key: string, keyPath: string[]) => {
                         </template>
                         <el-skeleton :rows="8" :loading="githubLoading" animated>
                             <template #default>
-                                <div class="flex flex-col">
-                                </div>
+                                <!-- <GithubReposView :repos="githubSearchResults"></GithubReposView> -->
                             </template>
                         </el-skeleton>
                     </el-card>
-
                 </div>
             </div>
         </div>
