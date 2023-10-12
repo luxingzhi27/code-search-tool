@@ -12,6 +12,8 @@ declare module 'vue' {
     ElInput: typeof import('element-plus/es')['ElInput']
     ElMenu: typeof import('element-plus/es')['ElMenu']
     ElMenuItem: typeof import('element-plus/es')['ElMenuItem']
+    ElPopover: typeof import('element-plus/es')['ElPopover']
+    ElRadio: typeof import('element-plus/es')['ElRadio']
     ElRadioButton: typeof import('element-plus/es')['ElRadioButton']
     ElRadioGroup: typeof import('element-plus/es')['ElRadioGroup']
     ElSkeleton: typeof import('element-plus/es')['ElSkeleton']
@@ -21,6 +23,7 @@ declare module 'vue' {
     GptResView: typeof import('./src/components/GptResView.vue')['default']
     HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
     HomePage: typeof import('./src/components/HomePage.vue')['default']
+    LanguageIcon: typeof import('./src/components/languageIcon.vue')['default']
     SearchResults: typeof import('./src/components/SearchResults.vue')['default']
     Weblink: typeof import('./src/components/Weblink.vue')['default']
   }

@@ -3,7 +3,7 @@ import HomePage from './components/HomePage.vue';
 </script>
 
 <template>
-  <div class="w-full h-full">
+  <div class="w-screen h-screen">
     <HomePage />
   </div>
 </template>

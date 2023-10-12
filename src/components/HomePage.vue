@@ -33,9 +33,11 @@ const aiLoading=ref(false)
 const handleQuestionSearch = () => {
     aiLoading.value=true
     webLoading.value=true
-    let content=question.value+',请使用'+preferredLanguage.value
+    let content=`${question.value}`
+    let prompt=`假设你是一个帮助我学习代码的助手,下面我将提出一个问题,请你给出三个${preferredLanguage.value}的例子}`
     getGptResponse({
         'messages':[
+            {'role':'user','content':prompt},
             {'role':'user','content':content}
         ]
     }).then((res:string)=>{
@@ -64,95 +66,95 @@ const handleQuestionSearch = () => {
     })
 
 }
-
-const activeIndex = ref('1')
-const handleSelect = (key: string, keyPath: string[]) => {
-    console.log(key, keyPath)
-}
 </script>
 
 
 <template>
-    <div class="flex flex-col h-screen items-center w-full">
-        <el-menu
-            :default-active="activeIndex"
-            class="w-full"
-            mode="horizontal"
-            :ellipsis="false"
-            @select="handleSelect"
-        >
-            <el-menu-item index="0"><h2>Code Search Tool</h2></el-menu-item>
-            <div class="flex-grow" />
-            <el-sub-menu index="1">
-                <template #title>Article Source</template>
-                <el-menu-item></el-menu-item>
-            </el-sub-menu>
-            <el-sub-menu index="2">
-                <template #title>Prefered Language</template>
-                <el-menu-item index="2-1" v-for="language in programLanguages" :key="language">{{ language }}</el-menu-item>
-            </el-sub-menu>
-        </el-menu>
-        <div class="flex justify-center items-center w-3/4 mt-10">
-            <el-input
-                placeholder="请输入您的问题"
-                v-model="question"
+    <div class="flex w-full h-full">
+        <div class="side-menu">
+            <div class="tab-buttons">
+            </div>
+            <el-popover
+                placement="right"
+                trigger="click"
             >
-                <template #prefix><el-icon><Search/></el-icon></template>
-            </el-input>
-            <button class="mx-2.5" @click="handleQuestionSearch">Go!</button>
+                <template #reference>
+                    <div class="setting-button  flex justify-center items-center mx-2 mt-2 mb-3 p-3">
+                        <el-icon><Setting /></el-icon>
+                    </div>
+                </template>
+                <div>
+                    <el-radio-group v-model="preferredLanguage" class="flex flex-col">
+                        <el-radio v-for="(lang,index) in programLanguages" class="w-full" :key="index" :label="lang">
+                        </el-radio>
+                    </el-radio-group>
+                </div>
+            </el-popover>
         </div>
+        <div class="flex flex-col h-screen items-center w-full">
+            <div class="flex justify-center items-center w-3/4 mt-10">
+                <el-input
+                    placeholder="请输入您的问题"
+                    v-model="question"
+                >
+                    <template #prefix><el-icon><Search/></el-icon></template>
+                </el-input>
+                <button class="mx-2.5" @click="handleQuestionSearch">Go!</button>
+            </div>
 
-        <div class="w-full flex justify-center">
-            <div class="w-3/4">
-                <el-radio-group v-model="resultSource" class="mb-4 mt-5 flex justify-start w-full">
-                    <el-radio-button :label="sources.AI">{{ sources.AI }}</el-radio-button>
-                    <el-radio-button :label="sources.WEB">{{ sources.WEB }}</el-radio-button>
-                    <el-radio-button :label="sources.GITHUB">{{ sources.GITHUB }}</el-radio-button>
-                </el-radio-group>
-                
-                <div class="w-full flex justify-center">
-
-                    <!-- gpt view -->
-                    <el-card class="my-2.5 w-full" v-if="resultSource===sources.AI">
-                        <template #header>
-                            <span class="flex justify-start font-bold">AI suggestions</span>
-                        </template>
-                        <el-skeleton :rows="8" :loading="aiLoading" animated>
-                            <template #default>
-                                <GptResView  :text="gptResponse"></GptResView>
-                            </template>
-                        </el-skeleton>
-                    </el-card>
+            <div class="w-full flex justify-center">
+                <div class="w-3/4">
+                    <el-radio-group v-model="resultSource" class="mb-4 mt-5 flex justify-start w-full">
+                        <el-radio-button :label="sources.AI">{{ sources.AI }}</el-radio-button>
+                        <el-radio-button :label="sources.WEB">{{ sources.WEB }}</el-radio-button>
+                        <el-radio-button :label="sources.GITHUB">{{ sources.GITHUB }}</el-radio-button>
+                    </el-radio-group>
                     
-                    <!-- web search -->
-                    <el-card class="my-2.5 w-full" v-if="resultSource===sources.WEB">
-                        <template #header>
-                            <span class="flex justify-start font-bold">Web search</span>
-                        </template>
-                        <el-skeleton :rows="8" :loading="webLoading" animated>
-                            <template #default>
-                                <div class="flex flex-col">
-                                    <Weblink v-for="(result,index) in webSearchResults" :key="index" :name="result.name" :snippet="result.snippet" :url="result.url"></Weblink>
-                                </div>
-                            </template>
-                        </el-skeleton>
-                    </el-card>
+                    <div class="w-full flex justify-center">
 
-                    <!-- github search -->
-                    <el-card class="my-2.5 w-full" v-if="resultSource===sources.GITHUB">
-                        <template #header>
-                            <span class="flex justify-start font-bold">Github search</span>
-                        </template>
-                        <el-skeleton :rows="8" :loading="githubLoading" animated>
-                            <template #default>
-                                <GithubReposView :repos="githubSearchResults"></GithubReposView>
+                        <!-- gpt view -->
+                        <el-card class="my-2.5 w-full" v-if="resultSource===sources.AI">
+                            <template #header>
+                                <span class="flex justify-start font-bold">AI suggestions</span>
                             </template>
-                        </el-skeleton>
-                    </el-card>
+                            <el-skeleton :rows="8" :loading="aiLoading" animated>
+                                <template #default>
+                                    <GptResView  :text="gptResponse"></GptResView>
+                                </template>
+                            </el-skeleton>
+                        </el-card>
+                        
+                        <!-- web search -->
+                        <el-card class="my-2.5 w-full" v-if="resultSource===sources.WEB">
+                            <template #header>
+                                <span class="flex justify-start font-bold">Web search</span>
+                            </template>
+                            <el-skeleton :rows="8" :loading="webLoading" animated>
+                                <template #default>
+                                    <div class="flex flex-col">
+                                        <Weblink v-for="(result,index) in webSearchResults" :key="index" :name="result.name" :snippet="result.snippet" :url="result.url"></Weblink>
+                                    </div>
+                                </template>
+                            </el-skeleton>
+                        </el-card>
+
+                        <!-- github search -->
+                        <el-card class="my-2.5 w-full" v-if="resultSource===sources.GITHUB">
+                            <template #header>
+                                <span class="flex justify-start font-bold">Github search</span>
+                            </template>
+                            <el-skeleton :rows="8" :loading="githubLoading" animated>
+                                <template #default>
+                                    <GithubReposView :repos="githubSearchResults"></GithubReposView>
+                                </template>
+                            </el-skeleton>
+                        </el-card>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+    
 </template>
 
 
@@ -203,5 +205,23 @@ const handleSelect = (key: string, keyPath: string[]) => {
 
 .el-card{
     animation: fadeIn 0.4s ease-in-out;
+}
+
+.side-menu{
+    width: 60px;
+    height: 100%;
+    background-color:rgba(29,30,31,0.5);
+    border-right: 0.3px solid #4c4d4f;
+    box-shadow: 0 10px 10px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.setting-button:hover{
+    cursor: pointer;
+    background-color: rgba(255,255,255,0.1);
+    border-radius: 8px;
 }
 </style>

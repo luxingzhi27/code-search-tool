@@ -28,13 +28,19 @@ const overflowHidForText=(val:string,max:number=80)=>{
 const handleHiddenTextClick=()=>{
     console.log('hidden text clicked')
 }
+
+import {shell} from 'electron'
+
+const openUrl=(url:string)=>{
+    shell.openExternal(url)
+}
 </script>
 
 <template>
     <div class="w-full flex-col justify-start items-center" v-if="repos.length>0&&repos[0].stars>=0">
-        <div class="single-repo" v-for="(repo,index) in repos" :key="index">
+        <div class="single-repo" v-for="(repo,index) in repos" :key="index" @click="openUrl(repo.url)" >
             <div class='repo-header'>
-                <a :href="repo.url" class="repo-name">{{ repo.full_name }}</a>
+                <span class="repo-name">{{ repo.full_name }}</span>
                 <div class="repo-star">
                     <el-icon color="rgb(255,215,0)"><StarFilled /></el-icon>
                     <div class="star-number">{{ repo.stars }}</div>
@@ -80,6 +86,12 @@ const handleHiddenTextClick=()=>{
     margin-bottom: 8px;
     margin-left: 8px;
     margin-right: 8px;
+    transition: transform 0.2s ease-in-out;
+}
+
+.single-repo:hover{
+    cursor: pointer;
+    transform:scale(1.02);
 }
 
 .repo-header{
