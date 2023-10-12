@@ -146,7 +146,7 @@ const handleSelect = (key: string, keyPath: string[]) => {
                         </template>
                         <el-skeleton :rows="8" :loading="githubLoading" animated>
                             <template #default>
-                                <!-- <GithubReposView :repos="githubSearchResults"></GithubReposView> -->
+                                <GithubReposView :repos="githubSearchResults"></GithubReposView>
                             </template>
                         </el-skeleton>
                     </el-card>

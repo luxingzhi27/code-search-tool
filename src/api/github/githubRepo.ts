@@ -7,7 +7,7 @@ export const githubSearchRepo = (query:string,lang:string,page:number,perPage:nu
     method:'get',
     url:url,
     params:{
-      q:encodeURIComponent(`${query} language:${lang}`),
+      q:`${query}+language:${lang}`,
       page:`${page}`,
       per_page:`${perPage}`
     }
