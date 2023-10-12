@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch ,reactive} from 'vue'
 import { getGptResponse } from '../api/gpt/gpt'
 import {bingWebSearch} from '../api/bing/bingSearch'
 import {githubSearchRepo} from '../api/github/githubRepo'
@@ -12,7 +12,7 @@ const question = ref('')
 const preferredLanguage = ref('python')
 const gptResponse=ref('这里空空如也~')
 const webSearchResults=ref([{snippet:'',name:'这里空空如也~',url:'https://www.baidu.com'}])
-const githubSearchResults=ref([{full_name:'',description:'',url:'',stargazers_count:0,updated_at:''}])
+const githubSearchResults=ref([{full_name:'',description:'',url:'',stars:-3,updated_at:''}])
 
 // search results sources
 const sources={
@@ -56,7 +56,6 @@ const handleQuestionSearch = () => {
     githubSearchRepo(question.value,preferredLanguage.value,1,10).then((res)=>{
         if(res.length>0){
             githubSearchResults.value=res
-            console.log(githubSearchResults.value)
             githubLoading.value=false
         }else{
             console.log('github search repo no result')

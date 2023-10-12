@@ -2,12 +2,11 @@ import axios from "axios"
 
 //分页获取
 export const githubSearchRepo = (query:string,lang:string,page:number,perPage:number) => {
-  const url = `https://api.github.com/search/repositories`
+  const url = `https://api.github.com/search/repositories?q=`+encodeURIComponent(query)+`+language:`+encodeURIComponent(lang)
   return axios({
     method:'get',
     url:url,
     params:{
-      q:`${query}+language:${lang}`,
       page:`${page}`,
       per_page:`${perPage}`
     }
@@ -22,9 +21,26 @@ export const githubSearchRepo = (query:string,lang:string,page:number,perPage:nu
           stars:repo.stargazers_count
         }
       })
+      if(repos.length===0){
+        repos = [{
+          //搜索结果为空，star为-1
+          full_name:'',
+          description:'',
+          url:'',
+          updated_at:'',
+          stars:-1
+        }]
+      }
       return repos
     }else{
-      return []
+      return [{
+        //网络错误，star为-2
+        full_name:'网络错误',
+        description:'请检查网络情况',
+        url:'',
+        updated_at:'',
+        stars:-2
+      }]
     }
   })
 }

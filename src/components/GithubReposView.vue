@@ -3,7 +3,7 @@ interface repo{
     full_name:string
     description:string
     url:string
-    stargazers_count:number
+    stars:number
     updated_at:string
 }
 
@@ -13,28 +13,55 @@ const props=defineProps({
         required:true
     }
 })
+
+const overflowHidForText=(val:string,max:number=80)=>{
+    let textLength=val.length
+    let resultText='';
+    if(textLength>max){
+        resultText=val.slice(0,max)+'...'
+    }else{
+        resultText=val
+    }
+    return resultText
+}
+
+const handleHiddenTextClick=()=>{
+    console.log('hidden text clicked')
+}
 </script>
 
 <template>
-    <div class="w-full flex-col justify-start items-center">
+    <div class="w-full flex-col justify-start items-center" v-if="repos.length>0&&repos[0].stars>=0">
         <div class="single-repo" v-for="(repo,index) in repos" :key="index">
             <div class='repo-header'>
                 <a :href="repo.url" class="repo-name">{{ repo.full_name }}</a>
                 <div class="repo-star">
-                    <el-icon><StarFilled /></el-icon>
-                    <div class="star-number">{{ repo.stargazers_count }}</div>
+                    <el-icon color="rgb(255,215,0)"><StarFilled /></el-icon>
+                    <div class="star-number">{{ repo.stars }}</div>
                 </div>
             </div>
             <div class="repo-body">
                 <div class="repo-description">
-                    {{ repo.description }}
+                    {{ overflowHidForText(repo.description)  }}
                 </div>
+                <em style="color:#EDA227;cursor:pointer;" @click="handleHiddenTextClick">>></em>
             </div>
             <div class="repo-footer">
                 <div class="repo-update-time">
                     {{ repo.updated_at }}
                 </div>
             </div>
+        </div>
+    </div>
+    <div class="w-full justify-center items-center" v-else>
+        <div class="w-full text-center p-4 font-bold text-xl" v-if="repos[0].stars===-3">
+            这里空空如也
+        </div>
+        <div class="w-full text-center p-4 font-bold text-1xl" v-if="repos[0].stars===-2">
+            网络错误,请检查网络环境
+        </div>
+        <div class="w-full text-center p-4 font-bold text-1xl" v-if="repos[0].stars===-1">
+            什么都没搜到,请换个关键词试试吧
         </div>
     </div>
 </template>
@@ -49,10 +76,10 @@ const props=defineProps({
     padding-left: 8px;
     background-color: #1a1a1a;
     border-radius: 8px;
-    margin-top: 6px;
-    margin-bottom: 6px;
-    margin-left: 6px;
-    margin-right: 6px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    margin-left: 8px;
+    margin-right: 8px;
 }
 
 .repo-header{
@@ -63,24 +90,24 @@ const props=defineProps({
 }
 
 .repo-header .repo-name{
+    margin-left: 8px;
     font-size: 18px;
-    font-weight: 500;
-    color: #fff;
+    font-weight: 600;
+    color: #646cff;
 }
 
 .repo-header .repo-star{
     display: flex;
     flex-direction: row;
-    justify-content: center;
+    justify-content: start;
     align-items: center;
 }
 
 .repo-header .repo-star el-icon{
     width: 20px;
     height: 20px;
-    background-color: #ffd700;
-    margin-left: 4px;
-    margin-right: 4px;
+    margin-left: 8px;
+    margin-right: 8px;
 }
 
 .repo-header .repo-star .star-number{
@@ -94,26 +121,33 @@ const props=defineProps({
     margin-bottom: 8px;
     margin-left: 8px;
     margin-right: 8px;
-    font-size: 14px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+}
+
+.repo-body.repo-description{
+    font-size: 13px;
     font-weight: 400;
     color: #fff;
-    text-align: left;
 }
 
 .repo-footer{
     margin-top: 8px;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     margin-left: 8px;
     margin-right: 8px;
     display: flex;
     justify-content: end;
     align-items:center ;
+    font-size: 12px;
 }   
 
 .repo-footer .repo-update-time{
     font-size: 12px;
     font-weight: 400;
-    color: #fff;
+    color: grey;
     text-align: center;
 }
 
