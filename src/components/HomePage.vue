@@ -14,12 +14,16 @@ const webSearchResults=ref([{snippet:'',name:'这里空空如也~',url:'https://
 // search results sources
 const sources={
     AI:"AI suggestions",
-    WEB:"Web search"
+    WEB:"Web search",
+    GITHUB:"Github search"
 }
 
 const resultSource=ref(sources.AI)
 // web search
 const webLoading=ref(false)
+
+// github search
+const githubLoading=ref(false)
 
 // ai suggestions
 const aiLoading=ref(false)
@@ -90,6 +94,7 @@ const handleSelect = (key: string, keyPath: string[]) => {
                 <el-radio-group v-model="resultSource" class="mb-4 mt-5 flex justify-start w-full">
                     <el-radio-button :label="sources.AI">{{ sources.AI }}</el-radio-button>
                     <el-radio-button :label="sources.WEB">{{ sources.WEB }}</el-radio-button>
+                    <el-radio-button :label="sources.GITHUB">{{ sources.GITHUB }}</el-radio-button>
                 </el-radio-group>
                 
                 <div class="w-full flex justify-center">
@@ -113,8 +118,21 @@ const handleSelect = (key: string, keyPath: string[]) => {
                         </template>
                         <el-skeleton :rows="8" :loading="webLoading" animated>
                             <template #default>
-                                <div class="flex flex-col" v-loading="webLoading">
+                                <div class="flex flex-col">
                                     <Weblink v-for="(result,index) in webSearchResults" :key="index" :name="result.name" :snippet="result.snippet" :url="result.url"></Weblink>
+                                </div>
+                            </template>
+                        </el-skeleton>
+                    </el-card>
+
+                    <!-- github search -->
+                    <el-card class="my-2.5 w-full" v-if="resultSource===sources.GITHUB">
+                        <template #header>
+                            <span class="flex justify-start font-bold">Github search</span>
+                        </template>
+                        <el-skeleton :rows="8" :loading="githubLoading" animated>
+                            <template #default>
+                                <div class="flex flex-col">
                                 </div>
                             </template>
                         </el-skeleton>
