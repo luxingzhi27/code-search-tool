@@ -9,7 +9,7 @@ import GithubReposView from './GithubReposView.vue';
 import SuggestQuestions from './SuggestQuestions.vue';
 import {bingAutoSuggest} from '../api/bing/bingSuggestions'
 
-const programLanguages:Array<string>=['C','C++','Java','Python','JavaScript','Vue.js','React.js','Rust','Go','TypeScript','Swift','Bash','Powershell']
+const programLanguages:Array<string>=['C','C++','Java','Python','JavaScript','Vue','React','Rust','Go','TypeScript','Swift','Bash','Powershell']
 const question = ref('')
 const preferredLanguage = ref(programLanguages[0])
 const gptResponse=ref('这里空空如也~')
@@ -52,13 +52,13 @@ const suggestQuestionsLoading=ref(false)
 const timer:any=ref()
 
 watch(question,(newVal)=>{
-    if(newVal.length>0){
+    if(newVal.length>0&&showBingSuggestions.value){
         if(timer.value){
             clearTimeout(timer.value)
         }
         timer.value=setTimeout(()=>{
             getBingSuggestions(newVal)
-        },40)
+        },10)
     }else{
         searchBingSuggestions.value=[]
     }
@@ -71,6 +71,11 @@ const handleQuestionSearch = async () => {
     githubLoading.value=true
     let content=`${question.value}`
     let prompt=`假设你是一个帮助我学习代码的助手,下面我将提出一个问题,请你给出三个${preferredLanguage.value}的例子}`
+    if(programLanguages.some((lang)=>{
+        return question.value.toLocaleLowerCase().includes(lang.toLocaleLowerCase())
+    })){
+        prompt=`假设你是一个帮助我学习代码的助手,下面我将提出一个问题,请你给出三个例子}`
+    }
     getGptResponse({
         'messages':[
             {'role':'user','content':prompt},
@@ -94,21 +99,24 @@ const handleQuestionSearch = async () => {
     })
 
     getKeyWordsFromGpt(question.value).then((res)=>{
-        if(res.length>0){
             keyWords.value=res
             console.log('keywords',keyWords.value)
-            githubSearchRepo(keyWords.value[0],preferredLanguage.value,1,10).then((res)=>{
+            let githubSearchPrompt=question.value
+            if(keyWords.value.length>0){
+                githubSearchPrompt=keyWords.value[0]
+            }
+            if(keyWords.value.length>1){
+                githubSearchPrompt=keyWords.value[0]+' '+keyWords.value[1]
+            }
+            console.log('github search prompt',githubSearchPrompt)
+            githubSearchRepo(githubSearchPrompt,preferredLanguage.value,1,10).then((res)=>{
                 if(res.length>0){
                     githubSearchResults.value=res
                     githubLoading.value=false
                 }else{
-                    console.log('github search repo no result')
                     githubLoading.value=false
                 }
             })
-        }else{
-            console.log('no key words')
-        }
     })
 }
 
@@ -165,7 +173,9 @@ const getBingSuggestions=(question:string)=>{
 }
 
 const handleBingSuggestionSelect=(suggestion:string)=>{
+    showBingSuggestions.value=false
     question.value=suggestion
+    handleQuestionSearch()
 }
 
 
