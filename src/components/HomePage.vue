@@ -14,6 +14,10 @@ const gptResponse=ref('这里空空如也~')
 const webSearchResults=ref([{snippet:'',name:'这里空空如也~',url:'https://www.baidu.com'}])
 const githubSearchResults=ref([{full_name:'',description:'',url:'',stars:-3,updated_at:''}])
 
+const handleLanguageChange = (val:string) => {
+    preferredLanguage.value=val
+}
+
 // search results sources
 const sources={
     AI:"AI suggestions",
@@ -45,7 +49,7 @@ const handleQuestionSearch = () => {
         aiLoading.value=false
     })
 
-    bingWebSearch(question.value).then((res)=>{
+    bingWebSearch(question.value+`${preferredLanguage.value}`).then((res)=>{
         if(res.length>0){
             webSearchResults.value=res
             webLoading.value=false
@@ -93,8 +97,21 @@ const handleQuestionSearch = () => {
         </div> -->
 
         <el-scrollbar class="w-full">
+            <div class="header">
+                <el-dropdown @command="handleLanguageChange">
+                    <div class="lang-choose">
+                        <el-text>{{preferredLanguage}}</el-text>
+                        <el-icon class="ml-2"><ArrowDown /></el-icon>
+                    </div>
+                    <template #dropdown>
+                        <el-dropdown-menu>
+                            <el-dropdown-item v-for="(lang,index) in programLanguages" :key="index" :command="lang">{{lang}}</el-dropdown-item>
+                        </el-dropdown-menu>
+                    </template>
+                </el-dropdown>
+            </div>
             <div class="flex flex-col h-screen items-center w-full">
-                <div class="flex justify-center items-center w-3/4 mt-10">
+                <div class="flex justify-center items-center w-3/4 mt-1">
                     <el-input
                         placeholder="请输入您的问题"
                         v-model="question"
@@ -221,9 +238,32 @@ const handleQuestionSearch = () => {
     align-items: center;
 }
 
-.setting-button:hover{
+.lang-choose:hover{
     cursor: pointer;
     background-color: rgba(255,255,255,0.1);
     border-radius: 8px;
+}
+
+.lang-choose{
+    width: fit-content;
+    height: 35px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-left: 4px;
+    padding-right: 4px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    margin-right: 30px;
+}
+
+.header{
+    margin-top: 10px;
+    width: 100%;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: end;
 }
 </style>
