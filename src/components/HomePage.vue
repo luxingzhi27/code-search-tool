@@ -7,6 +7,7 @@ import Weblink from './Weblink.vue';
 import GptResView from './GptResView.vue';
 import GithubReposView from './GithubReposView.vue';
 import SuggestQuestions from './SuggestQuestions.vue';
+import {bingAutoSuggest} from '../api/bing/bingSuggestions'
 
 const programLanguages:Array<string>=['C','C++','Java','Python','JavaScript','Rust','Go','TypeScript','Swift','Bash','Powershell']
 const question = ref('')
@@ -77,7 +78,7 @@ const handleQuestionSearch = async () => {
         if(res.length>0){
             keyWords.value=res
             console.log(keyWords.value)
-            githubSearchRepo(keyWords.value[1],preferredLanguage.value,1,10).then((res)=>{
+            githubSearchRepo(keyWords.value[0],preferredLanguage.value,1,10).then((res)=>{
                 if(res.length>0){
                     githubSearchResults.value=res
                     githubLoading.value=false
@@ -122,27 +123,37 @@ const getSuggestQuestion=(question:string)=>{
             {'role':'user','content':prompt},
         ]
     }).then((res:string)=>{
-        const getQuestions=(res:string):string[]=>{
+        const getQuestions=async (res:string):Promise<string[]>=>{
             const regex = /{([^}]+)}/g;
             const questions=res.match(regex)
             return questions?.map((q: string) => q.slice(1, -1)) || [];
         }
-        suggestQuestions.value=getQuestions(res)
-        suggestQuestionsLoading.value=false
+        getQuestions(res).then((res)=>{
+            suggestQuestions.value=res
+            suggestQuestionsLoading.value=false
+        })
+    })
+}
+
+const getBingSuggestions=(question:string,cb:any)=>{
+    const results=new Promise<string[]>((resolve, reject) => {
+        bingAutoSuggest(question).then((res) => {
+            console.log(res)
+            cb(res)
+            resolve(res)
+        }).catch((error) => {
+            reject(error);
+        })
     })
 }
 
 const handleSuggestionsSelect=(ques:string)=>{
-    suggestQuestions.value.filter((q:string)=>q!==ques)
     question.value=ques
     handleQuestionSearch()
 }
 
 onMounted(()=>{
-    const randomIndex=Math.floor(Math.random()*programLanguages.length)
-    const lang=programLanguages[randomIndex]
-    preferredLanguage.value=lang
-    getSuggestQuestion(lang+'相关技术')
+    getSuggestQuestion(preferredLanguage.value+'相关技术')
 })
 
 </script>
@@ -150,27 +161,6 @@ onMounted(()=>{
 
 <template>
     <div class="flex w-full h-full">
-        <!-- <div class="side-menu">
-            <div class="tab-buttons">
-            </div>
-            <el-popover
-                placement="right"
-                trigger="click"
-            >
-                <template #reference>
-                    <div class="setting-button  flex justify-center items-center mx-2 mt-2 mb-3 p-3">
-                        <el-icon><Setting /></el-icon>
-                    </div>
-                </template>
-                <div>
-                    <el-radio-group v-model="preferredLanguage" class="flex flex-col">
-                        <el-radio v-for="(lang,index) in programLanguages" class="w-full" :key="index" :label="lang">
-                        </el-radio>
-                    </el-radio-group>
-                </div>
-            </el-popover>
-        </div> -->
-
         <el-scrollbar class="w-full">
             <div class="header">
                 <el-dropdown @command="handleLanguageChange">
@@ -186,17 +176,29 @@ onMounted(()=>{
                 </el-dropdown>
             </div>
             <div class="flex flex-col h-screen items-center w-full">
-                <div class="flex justify-center items-center w-3/4 mt-1 mb-2">
-                    <el-input
+                <div class="flex justify-start items-center w-3/4 mt-1 mb-2">
+                    <el-autocomplete
                         placeholder="请输入您的问题"
                         v-model="question"
+                        :fetch-suggestions="getBingSuggestions"
+                        clearable
+                        style="width: 94%;"
                     >
                         <template #prefix><el-icon><Search/></el-icon></template>
-                    </el-input>
+                    </el-autocomplete>
                     <button class="mx-2.5" @click="handleQuestionSearch">Go!</button>
                 </div>
                 
-                <SuggestQuestions :questions="suggestQuestions" @select="handleSuggestionsSelect"></SuggestQuestions>
+                <div class="w-3/4">
+                    <div class="w-full mb-4 mt-5">
+                        <h2 class="text-2xl font-bold">搜索建议</h2>
+                    </div>
+                    <el-skeleton animated :loading="suggestQuestionsLoading">
+                        <template #default>
+                            <SuggestQuestions :questions="suggestQuestions" @select="handleSuggestionsSelect"></SuggestQuestions>
+                        </template>
+                    </el-skeleton>
+                </div>
                 
                 <div class="w-full flex justify-center">
                     <div class="w-3/4">

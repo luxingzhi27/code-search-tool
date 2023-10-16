@@ -14,7 +14,6 @@ export const bingWebSearch=(query:any)=>{
   }).then(res=>{
     let body = ''
     if(res.status===200&&res.data){
-      console.log(res.data)
       let pages = res.data.webPages.value.map((page:any)=>{
         return {
           url:page.url,

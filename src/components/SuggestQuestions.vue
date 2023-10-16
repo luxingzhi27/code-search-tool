@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import{Ref} from 'vue'
 defineProps({
     questions: {
         type: Array<String>,
         required: true
-    }
+    },
 })
 
 const emit = defineEmits(['select'])
@@ -14,10 +15,7 @@ const handleSelect = (ques: string) => {
 
 <template>
     <div class="flex flex-col w-full justify-center items-center">
-        <div class="w-3/4 mb-4 mt-5">
-            <h2 class="text-2xl font-bold">搜索建议</h2>
-        </div>
-        <div class="w-3/4 flex justify-start items-center flex-wrap">
+        <div class="w-full flex justify-start items-center flex-wrap">
             <el-tag v-for="(ques,index) in questions" :key="index" class="mx-2.5 my-1" @click="handleSelect(ques.toString())">{{ ques }}</el-tag>
         </div>
     </div>
