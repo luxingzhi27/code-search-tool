@@ -1,18 +1,22 @@
 <script setup lang="ts">
-import { ref, watch ,reactive} from 'vue'
+import { ref, watch ,reactive, onMounted,Ref} from 'vue'
 import { getGptResponse } from '../api/gpt/gpt'
 import {bingWebSearch} from '../api/bing/bingSearch'
 import {githubSearchRepo} from '../api/github/githubRepo'
 import Weblink from './Weblink.vue';
 import GptResView from './GptResView.vue';
 import GithubReposView from './GithubReposView.vue';
+import SuggestQuestions from './SuggestQuestions.vue';
 
 const programLanguages:Array<string>=['C','C++','Java','Python','JavaScript','Rust','Go','TypeScript','Swift','Bash','Powershell']
 const question = ref('')
-const preferredLanguage = ref('python')
+const preferredLanguage = ref(programLanguages[0])
 const gptResponse=ref('这里空空如也~')
-const webSearchResults=ref([{snippet:'',name:'这里空空如也~',url:'https://www.baidu.com'}])
+const webSearchResults=ref([{snippet:'',name:'这里空空如也~',url:'https://www.bing.com'}])
 const githubSearchResults=ref([{full_name:'',description:'',url:'',stars:-3,updated_at:''}])
+
+const suggestQuestions:Ref<string[]>=ref([])
+const keyWords:Ref<string[]>=ref([])
 
 const handleLanguageChange = (val:string) => {
     preferredLanguage.value=val
@@ -34,7 +38,15 @@ const githubLoading=ref(false)
 
 // ai suggestions
 const aiLoading=ref(false)
-const handleQuestionSearch = () => {
+
+// keyWords Loading
+const keyWordsLoading=ref(false)
+
+// suggest questions loading
+const suggestQuestionsLoading=ref(false)
+
+
+const handleQuestionSearch = async () => {
     aiLoading.value=true
     webLoading.value=true
     let content=`${question.value}`
@@ -49,6 +61,8 @@ const handleQuestionSearch = () => {
         aiLoading.value=false
     })
 
+    getSuggestQuestion(question.value)
+
     bingWebSearch(question.value+`${preferredLanguage.value}`).then((res)=>{
         if(res.length>0){
             webSearchResults.value=res
@@ -59,17 +73,78 @@ const handleQuestionSearch = () => {
         }
     })
 
-    githubSearchRepo(question.value,preferredLanguage.value,1,10).then((res)=>{
+    getKeyWordsFromGpt(question.value).then((res)=>{
         if(res.length>0){
-            githubSearchResults.value=res
-            githubLoading.value=false
+            keyWords.value=res
+            console.log(keyWords.value)
+            githubSearchRepo(keyWords.value[1],preferredLanguage.value,1,10).then((res)=>{
+                if(res.length>0){
+                    githubSearchResults.value=res
+                    githubLoading.value=false
+                }else{
+                    console.log('github search repo no result')
+                    githubLoading.value=false
+                }
+            })
         }else{
-            console.log('github search repo no result')
-            githubLoading.value=false
+            console.log('no key words')
         }
     })
-
 }
+
+
+//TODO: 响应异常处理
+const getKeyWordsFromGpt=async (question:string):Promise<string[]>=>{
+    keyWordsLoading.value=true
+    let prompt=`假设你是搜索引擎助手,我给出问题,请你给出这个问题有关编程技术的关键词,而不是编程语言的语法关键词,每一个关键词单独用{}括起来,问题的内容是${question}`
+    return getGptResponse({
+        'messages':[
+            {'role':'user','content':prompt},
+        ]
+    }).then((res:string)=>{
+        const getWords=(res:string):string[]=>{
+            const regex = /{([^}]+)}/g;
+            const words=res.match(regex)
+            return words?.map((w: string) => w.slice(1, -1)) || [];
+        }
+        let words=getWords(res)
+        keyWordsLoading.value=false
+        return words
+    })
+}
+
+//TODO: 响应异常处理
+const getSuggestQuestion=(question:string)=>{
+    suggestQuestionsLoading.value=true
+    let prompt=`假设你是搜索引擎助手,我给出问题,请你给出这个问题的相关联想问题,每一个联想问题单独用{}括起来,问题的内容是${question}`
+    getGptResponse({
+        'messages':[
+            {'role':'user','content':prompt},
+        ]
+    }).then((res:string)=>{
+        const getQuestions=(res:string):string[]=>{
+            const regex = /{([^}]+)}/g;
+            const questions=res.match(regex)
+            return questions?.map((q: string) => q.slice(1, -1)) || [];
+        }
+        suggestQuestions.value=getQuestions(res)
+        suggestQuestionsLoading.value=false
+    })
+}
+
+const handleSuggestionsSelect=(ques:string)=>{
+    suggestQuestions.value.filter((q:string)=>q!==ques)
+    question.value=ques
+    handleQuestionSearch()
+}
+
+onMounted(()=>{
+    const randomIndex=Math.floor(Math.random()*programLanguages.length)
+    const lang=programLanguages[randomIndex]
+    preferredLanguage.value=lang
+    getSuggestQuestion(lang+'相关技术')
+})
+
 </script>
 
 
@@ -111,7 +186,7 @@ const handleQuestionSearch = () => {
                 </el-dropdown>
             </div>
             <div class="flex flex-col h-screen items-center w-full">
-                <div class="flex justify-center items-center w-3/4 mt-1">
+                <div class="flex justify-center items-center w-3/4 mt-1 mb-2">
                     <el-input
                         placeholder="请输入您的问题"
                         v-model="question"
@@ -120,10 +195,12 @@ const handleQuestionSearch = () => {
                     </el-input>
                     <button class="mx-2.5" @click="handleQuestionSearch">Go!</button>
                 </div>
-
+                
+                <SuggestQuestions :questions="suggestQuestions" @select="handleSuggestionsSelect"></SuggestQuestions>
+                
                 <div class="w-full flex justify-center">
                     <div class="w-3/4">
-                        <el-radio-group v-model="resultSource" class="mb-4 mt-5 flex justify-start w-full">
+                        <el-radio-group v-model="resultSource" class="mb-4 mt-3 flex justify-start w-full">
                             <el-radio-button :label="sources.AI">{{ sources.AI }}</el-radio-button>
                             <el-radio-button :label="sources.WEB">{{ sources.WEB }}</el-radio-button>
                             <el-radio-button :label="sources.GITHUB">{{ sources.GITHUB }}</el-radio-button>

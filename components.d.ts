@@ -7,23 +7,17 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
-    ElAffix: typeof import('element-plus/es')['ElAffix']
     ElCard: typeof import('element-plus/es')['ElCard']
     ElDropdown: typeof import('element-plus/es')['ElDropdown']
     ElDropdownItem: typeof import('element-plus/es')['ElDropdownItem']
     ElDropdownMenu: typeof import('element-plus/es')['ElDropdownMenu']
     ElIcon: typeof import('element-plus/es')['ElIcon']
     ElInput: typeof import('element-plus/es')['ElInput']
-    ElMenu: typeof import('element-plus/es')['ElMenu']
-    ElMenuItem: typeof import('element-plus/es')['ElMenuItem']
-    ElPopover: typeof import('element-plus/es')['ElPopover']
-    ElRadio: typeof import('element-plus/es')['ElRadio']
     ElRadioButton: typeof import('element-plus/es')['ElRadioButton']
     ElRadioGroup: typeof import('element-plus/es')['ElRadioGroup']
     ElScrollbar: typeof import('element-plus/es')['ElScrollbar']
     ElSkeleton: typeof import('element-plus/es')['ElSkeleton']
-    ElSrollbar: typeof import('element-plus/es')['ElSrollbar']
-    ElSubMenu: typeof import('element-plus/es')['ElSubMenu']
+    ElTag: typeof import('element-plus/es')['ElTag']
     ElText: typeof import('element-plus/es')['ElText']
     GithubReposView: typeof import('./src/components/GithubReposView.vue')['default']
     GptResView: typeof import('./src/components/GptResView.vue')['default']
@@ -31,9 +25,7 @@ declare module 'vue' {
     HomePage: typeof import('./src/components/HomePage.vue')['default']
     LanguageIcon: typeof import('./src/components/languageIcon.vue')['default']
     SearchResults: typeof import('./src/components/SearchResults.vue')['default']
+    SuggestQuestions: typeof import('./src/components/SuggestQuestions.vue')['default']
     Weblink: typeof import('./src/components/Weblink.vue')['default']
-  }
-  export interface ComponentCustomProperties {
-    vLoading: typeof import('element-plus/es')['ElLoadingDirective']
   }
 }
