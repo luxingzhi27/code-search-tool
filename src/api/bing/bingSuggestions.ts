@@ -5,7 +5,7 @@ if (!SUBSCRIPTION_KEY) {
   throw new Error('Missing the AZURE_SUBSCRIPTION_KEY environment variable')
 }
 
-export const bingAutoSuggest = (query: string): Promise<string[]> => {
+export const bingAutoSuggest = async (query: string): Promise<string[]> => {
   return axios({
     method: 'get',
     url: `https://api.bing.microsoft.com/v7.0/suggestions?q=${encodeURIComponent(query)}`,
