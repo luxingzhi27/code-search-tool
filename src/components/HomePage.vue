@@ -71,7 +71,7 @@ const handleQuestionSearch = () => {
 
 <template>
     <div class="flex w-full h-full">
-        <div class="side-menu">
+        <!-- <div class="side-menu">
             <div class="tab-buttons">
             </div>
             <el-popover
@@ -90,69 +90,71 @@ const handleQuestionSearch = () => {
                     </el-radio-group>
                 </div>
             </el-popover>
-        </div>
-        <div class="flex flex-col h-screen items-center w-full">
-            <div class="flex justify-center items-center w-3/4 mt-10">
-                <el-input
-                    placeholder="请输入您的问题"
-                    v-model="question"
-                >
-                    <template #prefix><el-icon><Search/></el-icon></template>
-                </el-input>
-                <button class="mx-2.5" @click="handleQuestionSearch">Go!</button>
-            </div>
+        </div> -->
 
-            <div class="w-full flex justify-center">
-                <div class="w-3/4">
-                    <el-radio-group v-model="resultSource" class="mb-4 mt-5 flex justify-start w-full">
-                        <el-radio-button :label="sources.AI">{{ sources.AI }}</el-radio-button>
-                        <el-radio-button :label="sources.WEB">{{ sources.WEB }}</el-radio-button>
-                        <el-radio-button :label="sources.GITHUB">{{ sources.GITHUB }}</el-radio-button>
-                    </el-radio-group>
-                    
-                    <div class="w-full flex justify-center">
+        <el-scrollbar class="w-full">
+            <div class="flex flex-col h-screen items-center w-full">
+                <div class="flex justify-center items-center w-3/4 mt-10">
+                    <el-input
+                        placeholder="请输入您的问题"
+                        v-model="question"
+                    >
+                        <template #prefix><el-icon><Search/></el-icon></template>
+                    </el-input>
+                    <button class="mx-2.5" @click="handleQuestionSearch">Go!</button>
+                </div>
 
-                        <!-- gpt view -->
-                        <el-card class="my-2.5 w-full" v-if="resultSource===sources.AI">
-                            <template #header>
-                                <span class="flex justify-start font-bold">AI suggestions</span>
-                            </template>
-                            <el-skeleton :rows="8" :loading="aiLoading" animated>
-                                <template #default>
-                                    <GptResView  :text="gptResponse"></GptResView>
-                                </template>
-                            </el-skeleton>
-                        </el-card>
+                <div class="w-full flex justify-center">
+                    <div class="w-3/4">
+                        <el-radio-group v-model="resultSource" class="mb-4 mt-5 flex justify-start w-full">
+                            <el-radio-button :label="sources.AI">{{ sources.AI }}</el-radio-button>
+                            <el-radio-button :label="sources.WEB">{{ sources.WEB }}</el-radio-button>
+                            <el-radio-button :label="sources.GITHUB">{{ sources.GITHUB }}</el-radio-button>
+                        </el-radio-group>
                         
-                        <!-- web search -->
-                        <el-card class="my-2.5 w-full" v-if="resultSource===sources.WEB">
-                            <template #header>
-                                <span class="flex justify-start font-bold">Web search</span>
-                            </template>
-                            <el-skeleton :rows="8" :loading="webLoading" animated>
-                                <template #default>
-                                    <div class="flex flex-col">
-                                        <Weblink v-for="(result,index) in webSearchResults" :key="index" :name="result.name" :snippet="result.snippet" :url="result.url"></Weblink>
-                                    </div>
-                                </template>
-                            </el-skeleton>
-                        </el-card>
+                        <div class="w-full flex justify-center">
 
-                        <!-- github search -->
-                        <el-card class="my-2.5 w-full" v-if="resultSource===sources.GITHUB">
-                            <template #header>
-                                <span class="flex justify-start font-bold">Github search</span>
-                            </template>
-                            <el-skeleton :rows="8" :loading="githubLoading" animated>
-                                <template #default>
-                                    <GithubReposView :repos="githubSearchResults"></GithubReposView>
+                            <!-- gpt view -->
+                            <el-card class="my-2.5 w-full" v-if="resultSource===sources.AI">
+                                <template #header>
+                                    <span class="flex justify-start font-bold">AI suggestions</span>
                                 </template>
-                            </el-skeleton>
-                        </el-card>
+                                <el-skeleton :rows="8" :loading="aiLoading" animated>
+                                    <template #default>
+                                        <GptResView  :text="gptResponse"></GptResView>
+                                    </template>
+                                </el-skeleton>
+                            </el-card>
+                            
+                            <!-- web search -->
+                            <el-card class="my-2.5 w-full" v-if="resultSource===sources.WEB">
+                                <template #header>
+                                    <span class="flex justify-start font-bold">Web search</span>
+                                </template>
+                                <el-skeleton :rows="8" :loading="webLoading" animated>
+                                    <template #default>
+                                        <Weblink :links="webSearchResults"></Weblink>
+                                    </template>
+                                </el-skeleton>
+                            </el-card>
+
+                            <!-- github search -->
+                            <el-card class="my-2.5 w-full" v-if="resultSource===sources.GITHUB">
+                                <template #header>
+                                    <span class="flex justify-start font-bold">Github search</span>
+                                </template>
+                                <el-skeleton :rows="8" :loading="githubLoading" animated>
+                                    <template #default>
+                                        <GithubReposView :repos="githubSearchResults"></GithubReposView>
+                                    </template>
+                                </el-skeleton>
+                            </el-card>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </el-scrollbar>
+        
     </div>
     
 </template>

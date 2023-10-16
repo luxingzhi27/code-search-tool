@@ -50,7 +50,6 @@ const openUrl=(url:string)=>{
                 <div class="repo-description">
                     {{ overflowHidForText(repo.description)  }}
                 </div>
-                <em style="color:#EDA227;cursor:pointer;" @click="handleHiddenTextClick">>></em>
             </div>
             <div class="repo-footer">
                 <div class="repo-update-time">
@@ -133,10 +132,9 @@ const openUrl=(url:string)=>{
     margin-bottom: 8px;
     margin-left: 8px;
     margin-right: 8px;
-    text-align: left;
     display: flex;
     flex-direction: column;
-    align-items: end;
+    align-items: start;
 }
 
 .repo-body.repo-description{
