@@ -14,7 +14,7 @@ const handleSelect = (ques: string) => {
 </script>
 
 <template>
-    <div class="flex flex-col w-full justify-center items-center">
+    <div class="flex flex-col w-full justify-center items-center mb-2">
         <div class="w-full flex justify-start items-center flex-wrap">
             <el-tag v-for="(ques,index) in questions" :key="index" class="mx-2.5 my-1" @click="handleSelect(ques.toString())">{{ ques }}</el-tag>
         </div>

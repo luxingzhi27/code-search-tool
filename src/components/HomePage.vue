@@ -7,6 +7,7 @@ import Weblink from './Weblink.vue';
 import GptResView from './GptResView.vue';
 import GithubReposView from './GithubReposView.vue';
 import SuggestQuestions from './SuggestQuestions.vue';
+import KeyWordsLink from './KeyWordsLink.vue';
 import {bingAutoSuggest} from '../api/bing/bingSuggestions'
 
 const programLanguages:Array<string>=['C','C++','Java','Python','JavaScript','Vue','React','Rust','Go','TypeScript','Swift','Bash','Powershell']
@@ -17,7 +18,7 @@ const webSearchResults=ref([{snippet:'',name:'这里空空如也~',url:'https://
 const githubSearchResults=ref([{full_name:'',description:'',url:'',stars:-3,updated_at:''}])
 
 const suggestQuestions:Ref<string[]>=ref([])
-const keyWords:Ref<string[]>=ref([])
+const keyWords:Ref<string[]>=ref([])  //联想关键词
 const searchBingSuggestions:Ref<string[]>=ref([])
 const showBingSuggestions=ref(false)
 
@@ -70,7 +71,7 @@ const handleQuestionSearch = async () => {
     webLoading.value=true
     githubLoading.value=true
     let content=`${question.value}`
-    let prompt=`假设你是一个帮助我学习代码的助手,下面我将提出一个问题,请你给出三个${preferredLanguage.value}的例子}`
+    let prompt=`假设你是一个帮助我学习代码的助手,下面我将提出一个问题,请你给出一些${preferredLanguage.value}的例子}`
     if(programLanguages.some((lang)=>{
         return question.value.toLocaleLowerCase().includes(lang.toLocaleLowerCase())
     })){
@@ -124,7 +125,7 @@ const handleQuestionSearch = async () => {
 //TODO: 响应异常处理
 const getKeyWordsFromGpt=async (question:string):Promise<string[]>=>{
     keyWordsLoading.value=true
-    let prompt=`假设你是搜索引擎助手,我给出问题,请你给出这个问题有关编程技术的关键词,而不是编程语言的语法关键词,每一个关键词单独用{}括起来,问题的内容是${question}`
+    let prompt=`假设你是搜索引擎助手,我给出问题,请你给出这个问题有关编程技术的相关联想关键词,而不是编程语言的语法关键词,每一个关键词单独用{}括起来,问题的内容是${question}`
     return getGptResponse({
         'messages':[
             {'role':'user','content':prompt},
@@ -146,13 +147,14 @@ const getSuggestQuestion=(question:string='')=>{
     suggestQuestionsLoading.value=true
     let prompt=`假设你是搜索引擎助手,我给出问题,请你给出这个问题的6个相关联想问题,每一个联想问题单独用{}括起来,每个联想问题的前面不需要序号,联想问题不需要任何多余的内容,问题的内容是${question}`
     if(question.length===0){
-        prompt=`请给我7个有关于编程技术方面的问题,每个问题请用{}单独括起来,问题中不需要任何多余的内容且不需要标序号`
+        prompt=`请给我7个有关于编程技术方面的问题,问题的主要内容请用{}单独括起来,而不是把标号括起来`
     }
     getGptResponse({
         'messages':[
             {'role':'user','content':prompt},
         ]
     }).then((res:string)=>{
+        console.log('suggest questions',res)
         const getQuestions=async (res:string):Promise<string[]>=>{
             const regex = /{([^}]+)}/g;
             const questions=res.match(regex)
@@ -233,7 +235,7 @@ onMounted(()=>{
                     <div class="w-full mb-4 mt-5">
                         <h2 class="text-2xl font-bold">搜索建议</h2>
                     </div>
-                    <el-skeleton :rows="2" animated :loading="suggestQuestionsLoading">
+                    <el-skeleton :rows="1" animated :loading="suggestQuestionsLoading">
                         <template #default>
                             <SuggestQuestions :questions="suggestQuestions" @select="handleSuggestionsSelect"></SuggestQuestions>
                         </template>
@@ -285,6 +287,10 @@ onMounted(()=>{
                                     </template>
                                 </el-skeleton>
                             </el-card>
+
+                            <div class="ml-6" style="width: 27%;">
+                                <KeyWordsLink :keyWords="keyWords"></KeyWordsLink>
+                            </div>
                         </div>
                     </div>
                 </div>
