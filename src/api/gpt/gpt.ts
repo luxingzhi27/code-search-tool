@@ -18,7 +18,7 @@ export const getGptResponse = (params:any) => {
                     return res.data.choices[0].message.content
                 }
             }else{
-                return 'api error'+res.data.msg
+                return 'api error '+res.data.msg
             }
         }else{
             return 'network error'

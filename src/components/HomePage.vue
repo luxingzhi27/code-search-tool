@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, watch ,reactive, onMounted,Ref,onBeforeMount} from 'vue'
+import { ref, watch ,reactive, onMounted,Ref,onBeforeMount, nextTick} from 'vue'
 import { getGptResponse } from '../api/gpt/gpt'
+import { useGpt } from '../api/gpt/GptStreamVue'
 import {bingWebSearch} from '../api/bing/bingSearch'
 import {githubSearchRepo} from '../api/github/githubRepo'
 import Weblink from './Weblink.vue';
@@ -10,6 +11,7 @@ import SuggestQuestions from './SuggestQuestions.vue';
 import KeyWordsLink from './KeyWordsLink.vue';
 import {bingAutoSuggest} from '../api/bing/bingSuggestions'
 import {wikipediaSearch,SearchResult} from '../api/mediawiki/wikipediaSearch'
+import { ElScrollbar } from 'element-plus'
 
 const programLanguages:Array<string>=['C','C++','Java','Python','JavaScript','Vue','React','Rust','Go','TypeScript','Swift','Bash','Powershell']
 const question = ref('')
@@ -54,22 +56,33 @@ const wikiLoading=ref(false)
 // suggest questions loading
 const suggestQuestionsLoading=ref(false)
 
-//防止请求发送太频繁
-const timer:any=ref()
 
 watch(question,(newVal)=>{
-    if(newVal.length>0&&showBingSuggestions.value){
-        if(timer.value){
-            clearTimeout(timer.value)
-        }
-        timer.value=setTimeout(()=>{
-            getBingSuggestions(newVal)
-        },10)
+    if(showBingSuggestions.value){
+        getBingSuggestions(newVal)
     }else{
         searchBingSuggestions.value=[]
     }
 })
 
+
+const { msgList, streaming, streamingText, stream } = useGpt('ae27403c9624903838b63b16f406931e', false)
+
+const innerRef = ref<HTMLDivElement>()
+const scrollbarRef = ref<InstanceType<typeof ElScrollbar>>()
+
+const scrollTopValue= ref(0)
+const handleScroll=({scrollTop}:any)=>{
+    scrollTopValue.value=scrollTop
+}
+// 监听streamingText变化，滚动到底部
+watch(streamingText, (val) => {
+  if (val) {
+    if(Math.abs(scrollTopValue.value+innerRef.value!.clientHeight-innerRef.value!.scrollHeight)<20){
+        scrollbarRef.value?.setScrollTop(innerRef.value!.clientHeight);
+    }
+  }
+})
 
 const handleQuestionSearch = async () => {
     beginSearch.value=true
@@ -83,15 +96,17 @@ const handleQuestionSearch = async () => {
     })){
         prompt=`假设你是一个帮助我学习代码的助手,下面我将提出一个问题,请你给出三个例子}`
     }
-    getGptResponse({
-        'messages':[
-            {'role':'user','content':prompt},
-            {'role':'user','content':content}
-        ]
-    }).then((res:string)=>{
-        gptResponse.value=res
-        aiLoading.value=false
-    })
+    // getGptResponse({
+    //     'messages':[
+    //         {'role':'user','content':prompt},
+    //         {'role':'user','content':content}
+    //     ]
+    // }).then((res:string)=>{
+    //     gptResponse.value=res
+    //     aiLoading.value=false
+    // })
+    stream(prompt+'\n'+content)
+
 
     getSuggestQuestion(question.value)
 
@@ -163,6 +178,11 @@ const getKeyWordsFromGpt=async (question:string):Promise<string[]>=>{
         keyWordsLoading.value=false
         console.log('keywordsloading',keyWordsLoading.value)
         return words
+    }).catch((err)=>{
+        console.log(err)
+        let words=[err.message||'error']
+        keyWordsLoading.value=false
+        return words
     })
 }
 
@@ -187,6 +207,10 @@ const getSuggestQuestion=(question:string='')=>{
             suggestQuestions.value=res
             suggestQuestionsLoading.value=false
         })
+    }).catch((err)=>{
+        console.log(err)
+        suggestQuestions.value=[err.message||'error']
+        suggestQuestionsLoading.value=false
     })
 }
 
@@ -219,113 +243,116 @@ onBeforeMount(()=>{
 
 <template>
     <div class="flex w-full h-full">
-        <el-scrollbar class="w-full">
-            <div class="header">
-                <el-dropdown @command="handleLanguageChange">
-                    <div class="lang-choose">
-                        <el-text>{{preferredLanguage}}</el-text>
-                        <el-icon class="ml-2"><ArrowDown /></el-icon>
-                    </div>
-                    <template #dropdown>
-                        <el-dropdown-menu>
-                            <el-dropdown-item v-for="(lang,index) in programLanguages" :key="index" :command="lang">{{lang}}</el-dropdown-item>
-                        </el-dropdown-menu>
-                    </template>
-                </el-dropdown>
-            </div>
-            <div class="flex flex-col h-screen items-center w-full">
-                <div class="flex justify-start items-center w-3/4 mt-1 mb-2">
-                    <div class="w-full" style="position: relative;">
-                        <el-input
-                            placeholder="请输入您的问题"
-                            v-model="question"
-                            clearable
-                            @focus="showBingSuggestions=true"
-                            @blur="showBingSuggestions=false"
-                        >
-                            <template #prefix><el-icon><Search/></el-icon></template>
-                        </el-input>
-                        <div v-if="showBingSuggestions && searchBingSuggestions.length>0" class="flex flex-col justify-start items-start p-2" 
-                            style="background-color: #1a1a1a;border-radius: 8px;position: absolute;z-index: 999; width: 100%; top: 40px">
-                            <div  class="bing-suggestion" v-for="(suggestion,index) in searchBingSuggestions" :key="index" @mousedown.prevent="handleBingSuggestionSelect(suggestion)">
-                                {{ suggestion }}
-                            </div>
+        <el-scrollbar ref="scrollbarRef"  class="w-full" @scroll="handleScroll">
+            <div ref="innerRef" class="w-full">
+                <div class="header">
+                    <el-dropdown @command="handleLanguageChange">
+                        <div class="lang-choose">
+                            <el-text>{{preferredLanguage}}</el-text>
+                            <el-icon class="ml-2"><ArrowDown /></el-icon>
                         </div>
-                    </div>
-                    <button class="mx-2.5" @click="handleQuestionSearch">Go!</button>
-                </div>
-                
-                <div class="w-3/4">
-                    <div class="w-full mb-4 mt-5">
-                        <h2 class="text-2xl font-bold">搜索建议</h2>
-                    </div>
-                    <el-skeleton :rows="1" animated :loading="suggestQuestionsLoading">
-                        <template #default>
-                            <SuggestQuestions :questions="suggestQuestions" @select="handleSuggestionsSelect"></SuggestQuestions>
+                        <template #dropdown>
+                            <el-dropdown-menu>
+                                <el-dropdown-item v-for="(lang,index) in programLanguages" :key="index" :command="lang">{{lang}}</el-dropdown-item>
+                            </el-dropdown-menu>
                         </template>
-                    </el-skeleton>
+                    </el-dropdown>
                 </div>
-                
-                <div class="w-full flex justify-center">
-                    <div class="w-3/4">
-                        <el-radio-group v-model="resultSource" class="mb-4 mt-3 flex justify-start w-full">
-                            <el-radio-button :label="sources.AI">{{ sources.AI }}</el-radio-button>
-                            <el-radio-button :label="sources.WEB">{{ sources.WEB }}</el-radio-button>
-                            <el-radio-button :label="sources.GITHUB">{{ sources.GITHUB }}</el-radio-button>
-                        </el-radio-group>
-                        
-                        <div class="w-full flex justify-center">
-
-                            <!-- gpt view -->
-                            <el-card class="my-2.5 w-full" v-if="resultSource===sources.AI">
-                                <template #header>
-                                    <span class="flex justify-start font-bold">AI suggestions</span>
-                                </template>
-                                <el-skeleton :rows="8" :loading="aiLoading" animated>
-                                    <template #default>
-                                        <GptResView  :text="gptResponse"></GptResView>
-                                    </template>
-                                </el-skeleton>
-                            </el-card>
-                            
-                            <!-- web search -->
-                            <el-card class="my-2.5 w-full" v-if="resultSource===sources.WEB">
-                                <template #header>
-                                    <span class="flex justify-start font-bold">Web search</span>
-                                </template>
-                                <el-skeleton :rows="8" :loading="webLoading" animated>
-                                    <template #default>
-                                        <Weblink :links="webSearchResults"></Weblink>
-                                    </template>
-                                </el-skeleton>
-                            </el-card>
-
-                            <!-- github search -->
-                            <el-card class="my-2.5 w-full" v-if="resultSource===sources.GITHUB">
-                                <template #header>
-                                    <span class="flex justify-start font-bold">Github search</span>
-                                </template>
-                                <el-skeleton :rows="8" :loading="githubLoading" animated>
-                                    <template #default>
-                                        <GithubReposView :repos="githubSearchResults"></GithubReposView>
-                                    </template>
-                                </el-skeleton>
-                            </el-card>
-
-                            <div class="ml-6" style="width: 27%;" v-if="beginSearch">
-                                <div class="key-words-header">
-                                    联想推荐
+                <div class="flex flex-col h-screen items-center w-full">
+                    <div class="flex justify-start items-center w-3/4 mt-1 mb-2">
+                        <div class="w-full" style="position: relative;">
+                            <el-input
+                                placeholder="请输入您的问题"
+                                v-model="question"
+                                clearable
+                                @focus="showBingSuggestions=true"
+                                @blur="showBingSuggestions=false"
+                            >
+                                <template #prefix><el-icon><Search/></el-icon></template>
+                            </el-input>
+                            <div v-if="showBingSuggestions && searchBingSuggestions.length>0" class="flex flex-col justify-start items-start p-2" 
+                                style="background-color: #1a1a1a;border-radius: 8px;position: absolute;z-index: 999; width: 100%; top: 40px">
+                                <div  class="bing-suggestion" v-for="(suggestion,index) in searchBingSuggestions" :key="index" @mousedown.prevent="handleBingSuggestionSelect(suggestion)">
+                                    {{ suggestion }}
                                 </div>
-                                <el-skeleton animated :loading="wikiLoading||keyWordsLoading">
-                                    <template #default>
-                                        <KeyWordsLink  :keyWords="wikiRes"></KeyWordsLink>
+                            </div>
+                        </div>
+                        <button class="mx-2.5" @click="handleQuestionSearch">Go!</button>
+                    </div>
+                    
+                    <div class="w-3/4">
+                        <div class="w-full mb-4 mt-5">
+                            <h2 class="text-2xl font-bold">搜索建议</h2>
+                        </div>
+                        <el-skeleton :rows="1" animated :loading="suggestQuestionsLoading">
+                            <template #default>
+                                <SuggestQuestions :questions="suggestQuestions" @select="handleSuggestionsSelect"></SuggestQuestions>
+                            </template>
+                        </el-skeleton>
+                    </div>
+                    
+                    <div class="w-full flex justify-center">
+                        <div class="w-3/4">
+                            <el-radio-group v-model="resultSource" class="mb-4 mt-3 flex justify-start w-full">
+                                <el-radio-button :label="sources.AI">{{ sources.AI }}</el-radio-button>
+                                <el-radio-button :label="sources.WEB">{{ sources.WEB }}</el-radio-button>
+                                <el-radio-button :label="sources.GITHUB">{{ sources.GITHUB }}</el-radio-button>
+                            </el-radio-group>
+                            
+                            <div class="w-full flex justify-center">
+
+                                <!-- gpt view -->
+                                <el-card class="my-2.5 w-full" v-if="resultSource===sources.AI">
+                                    <template #header>
+                                        <span class="flex justify-start font-bold">AI suggestions</span>
                                     </template>
-                                </el-skeleton>
+                                    <!-- <el-skeleton :rows="8" :loading="aiLoading" animated> -->
+                                        <!-- <template #default> -->
+                                            <GptResView  :text="streamingText"></GptResView>
+                                        <!-- </template> -->
+                                    <!-- </el-skeleton> -->
+                                </el-card>
+                                
+                                <!-- web search -->
+                                <el-card class="my-2.5 w-full" v-if="resultSource===sources.WEB">
+                                    <template #header>
+                                        <span class="flex justify-start font-bold">Web search</span>
+                                    </template>
+                                    <el-skeleton :rows="8" :loading="webLoading" animated>
+                                        <template #default>
+                                            <Weblink :links="webSearchResults"></Weblink>
+                                        </template>
+                                    </el-skeleton>
+                                </el-card>
+
+                                <!-- github search -->
+                                <el-card class="my-2.5 w-full" v-if="resultSource===sources.GITHUB">
+                                    <template #header>
+                                        <span class="flex justify-start font-bold">Github search</span>
+                                    </template>
+                                    <el-skeleton :rows="8" :loading="githubLoading" animated>
+                                        <template #default>
+                                            <GithubReposView :repos="githubSearchResults"></GithubReposView>
+                                        </template>
+                                    </el-skeleton>
+                                </el-card>
+
+                                <div class="ml-6" style="width: 27%;" v-if="beginSearch">
+                                    <div class="key-words-header">
+                                        联想推荐
+                                    </div>
+                                    <el-skeleton animated :loading="wikiLoading||keyWordsLoading">
+                                        <template #default>
+                                            <KeyWordsLink  :keyWords="wikiRes"></KeyWordsLink>
+                                        </template>
+                                    </el-skeleton>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+            
         </el-scrollbar>
         
     </div>
