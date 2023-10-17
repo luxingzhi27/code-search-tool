@@ -1,26 +1,17 @@
 <script setup lang="ts">
-import { onMounted,Ref ,ref} from 'vue';
+import { onBeforeMount, onBeforeUpdate, onMounted,Ref ,ref, watchEffect} from 'vue';
 import {wikipediaSearch,SearchResult} from '../api/mediawiki/wikipediaSearch'
 const props= defineProps({
     keyWords: {
-        type: Array as ()=>string[],
+        type: Array as ()=>SearchResult[],
         required: true
     },
 })
 
 
-const results:Ref<SearchResult[]>=ref([])
+ 
 
 
-onMounted(()=>{
-    for(let word in props.keyWords){
-        wikipediaSearch(word).then((res:SearchResult)=>{
-            if(res.key!='null'){
-                results.value.push(res)
-            }
-        })
-    }
-})
 
 import {shell} from 'electron'
 const handleClick=(url:string)=>{
@@ -31,11 +22,8 @@ const handleClick=(url:string)=>{
 
 <template>
     <div class="key-words">
-        <div class="key-words-header">
-            联想推荐
-        </div>
         <el-space wrap>
-            <el-tag v-for="(word,index) in results" :key="index" type="info" class="word" @click="handleClick(word.url)">
+            <el-tag v-for="(word,index) in keyWords" :key="index" type="info" class="word" @click="handleClick(word.url)">
                 {{ word.title }}
             </el-tag>
         </el-space>
@@ -51,14 +39,16 @@ const handleClick=(url:string)=>{
     align-items: start;
     justify-content: start;
 }
-.key-words-header{
-    font-size: 20px;
-    font-weight: bold;
-    margin-bottom: 10px;
-    margin-top: 10px;
-}    
+    
+
+.word{
+    transition: transform 0.1s ease-in-out;
+}
 
 .word:hover{
     cursor: pointer;
+    color: #646cff;
+    text-decoration: underline;
+    transform: scale(1.05);
 }
 </style>

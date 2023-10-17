@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch ,reactive, onMounted,Ref} from 'vue'
+import { ref, watch ,reactive, onMounted,Ref,onBeforeMount} from 'vue'
 import { getGptResponse } from '../api/gpt/gpt'
 import {bingWebSearch} from '../api/bing/bingSearch'
 import {githubSearchRepo} from '../api/github/githubRepo'
@@ -9,6 +9,7 @@ import GithubReposView from './GithubReposView.vue';
 import SuggestQuestions from './SuggestQuestions.vue';
 import KeyWordsLink from './KeyWordsLink.vue';
 import {bingAutoSuggest} from '../api/bing/bingSuggestions'
+import {wikipediaSearch,SearchResult} from '../api/mediawiki/wikipediaSearch'
 
 const programLanguages:Array<string>=['C','C++','Java','Python','JavaScript','Vue','React','Rust','Go','TypeScript','Swift','Bash','Powershell']
 const question = ref('')
@@ -19,8 +20,10 @@ const githubSearchResults=ref([{full_name:'',description:'',url:'',stars:-3,upda
 
 const suggestQuestions:Ref<string[]>=ref([])
 const keyWords:Ref<string[]>=ref([])  //联想关键词
+const wikiRes:Ref<SearchResult[]>=ref([]) //wiki搜索结果
 const searchBingSuggestions:Ref<string[]>=ref([])
 const showBingSuggestions=ref(false)
+const beginSearch=ref(false)
 
 const handleLanguageChange = (val:string) => {
     preferredLanguage.value=val
@@ -46,6 +49,8 @@ const aiLoading=ref(false)
 // keyWords Loading
 const keyWordsLoading=ref(false)
 
+const wikiLoading=ref(false)
+
 // suggest questions loading
 const suggestQuestionsLoading=ref(false)
 
@@ -67,6 +72,7 @@ watch(question,(newVal)=>{
 
 
 const handleQuestionSearch = async () => {
+    beginSearch.value=true
     aiLoading.value=true
     webLoading.value=true
     githubLoading.value=true
@@ -107,9 +113,8 @@ const handleQuestionSearch = async () => {
                 githubSearchPrompt=keyWords.value[0]
             }
             if(keyWords.value.length>1){
-                githubSearchPrompt=keyWords.value[0]+' '+keyWords.value[1]
+                githubSearchPrompt=keyWords.value[0]
             }
-            console.log('github search prompt',githubSearchPrompt)
             githubSearchRepo(githubSearchPrompt,preferredLanguage.value,1,10).then((res)=>{
                 if(res.length>0){
                     githubSearchResults.value=res
@@ -118,14 +123,32 @@ const handleQuestionSearch = async () => {
                     githubLoading.value=false
                 }
             })
+            getWikiRes()
     })
 }
+
+const getWikiRes = async () => {
+    wikiLoading.value=true
+    let searchResults:SearchResult[]=[]
+  for (const word of keyWords.value) {
+    try {
+      const res = await wikipediaSearch(word);
+      if (res) {
+        searchResults.push(res);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+  wikiRes.value=searchResults
+  wikiLoading.value=false
+};
 
 
 //TODO: 响应异常处理
 const getKeyWordsFromGpt=async (question:string):Promise<string[]>=>{
     keyWordsLoading.value=true
-    let prompt=`假设你是搜索引擎助手,我给出问题,请你给出这个问题有关编程技术的相关联想关键词,而不是编程语言的语法关键词,每一个关键词单独用{}括起来,问题的内容是${question}`
+    let prompt=`假设你是搜索引擎助手,我给出问题,请你用中文给出不超过10个这个问题有关编程技术的相关联想关键词,而不是编程语言的语法关键词,每一个关键词单独用{}括起来,问题的内容是${question}`
     return getGptResponse({
         'messages':[
             {'role':'user','content':prompt},
@@ -138,6 +161,7 @@ const getKeyWordsFromGpt=async (question:string):Promise<string[]>=>{
         }
         let words=getWords(res)
         keyWordsLoading.value=false
+        console.log('keywordsloading',keyWordsLoading.value)
         return words
     })
 }
@@ -145,16 +169,15 @@ const getKeyWordsFromGpt=async (question:string):Promise<string[]>=>{
 //TODO: 响应异常处理
 const getSuggestQuestion=(question:string='')=>{
     suggestQuestionsLoading.value=true
-    let prompt=`假设你是搜索引擎助手,我给出问题,请你给出这个问题的6个相关联想问题,每一个联想问题单独用{}括起来,每个联想问题的前面不需要序号,联想问题不需要任何多余的内容,问题的内容是${question}`
+    let prompt=`假设你是搜索引擎助手,我给出问题,请你给出这个问题的6个相关联想问题,每一个联想问题单独用{}括起来,例如{如何解析json文件},请不要包含任何多余的内容,我要问的问题的内容是${question}`
     if(question.length===0){
-        prompt=`请给我7个有关于编程技术方面的问题,问题的主要内容请用{}单独括起来,而不是把标号括起来`
+        prompt=`请给我6个有关于编程技术方面的问题,问题用{}单独括起来,例如{如何解析json文件},请不要包含任何多余的内容`
     }
     getGptResponse({
         'messages':[
             {'role':'user','content':prompt},
         ]
     }).then((res:string)=>{
-        console.log('suggest questions',res)
         const getQuestions=async (res:string):Promise<string[]>=>{
             const regex = /{([^}]+)}/g;
             const questions=res.match(regex)
@@ -186,7 +209,8 @@ const handleSuggestionsSelect=(ques:string)=>{
     handleQuestionSearch()
 }
 
-onMounted(()=>{
+
+onBeforeMount(()=>{
     getSuggestQuestion()
 })
 
@@ -288,8 +312,15 @@ onMounted(()=>{
                                 </el-skeleton>
                             </el-card>
 
-                            <div class="ml-6" style="width: 27%;">
-                                <KeyWordsLink :keyWords="keyWords"></KeyWordsLink>
+                            <div class="ml-6" style="width: 27%;" v-if="beginSearch">
+                                <div class="key-words-header">
+                                    联想推荐
+                                </div>
+                                <el-skeleton animated :loading="wikiLoading||keyWordsLoading">
+                                    <template #default>
+                                        <KeyWordsLink  :keyWords="wikiRes"></KeyWordsLink>
+                                    </template>
+                                </el-skeleton>
                             </div>
                         </div>
                     </div>
@@ -411,6 +442,13 @@ onMounted(()=>{
     cursor: pointer;
     background-color: rgba(255,255,255,0.1);
     border-radius: 8px;
+}
+
+.key-words-header{
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    margin-top: 10px;
 }
 
 </style>
