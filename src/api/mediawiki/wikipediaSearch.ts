@@ -6,13 +6,13 @@ export interface SearchResult {
     url: string;
 }
 
-export const wikipediaSearch=(keyword: string): Promise<SearchResult>=> {
+export const wikipediaSearch=(keyword: string):Promise<SearchResult>=> {
     const apiUrl = 'https://zh.wikipedia.org/w/rest.php/v1/search/page?q='+encodeURIComponent(keyword)+'&limit=1';
+    let searchResult: SearchResult
     return axios({
         method: 'get',
         url: apiUrl,
     }).then((response) => {
-        let searchResult: SearchResult
         if(response.status !== 200) {
             searchResult={
                 title: 'null',

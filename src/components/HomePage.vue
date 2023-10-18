@@ -33,9 +33,9 @@ const handleLanguageChange = (val:string) => {
 
 // search results sources
 const sources={
-    AI:"AI suggestions",
-    WEB:"Web search",
-    GITHUB:"Github search"
+    AI:"AI建议",
+    WEB:"网络搜索",
+    GITHUB:"Github搜索"
 }
 
 const resultSource=ref(sources.AI)
@@ -50,8 +50,6 @@ const aiLoading=ref(false)
 
 // keyWords Loading
 const keyWordsLoading=ref(false)
-
-const wikiLoading=ref(false)
 
 // suggest questions loading
 const suggestQuestionsLoading=ref(false)
@@ -143,20 +141,17 @@ const handleQuestionSearch = async () => {
 }
 
 const getWikiRes = async () => {
-    wikiLoading.value=true
-    let searchResults:SearchResult[]=[]
   for (const word of keyWords.value) {
     try {
-      const res = await wikipediaSearch(word);
-      if (res) {
-        searchResults.push(res);
-      }
+      wikipediaSearch(word).then((res)=>{
+        if (res) {
+            wikiRes.value.push(res);
+        }
+      });
     } catch (error) {
       console.error(error);
     }
   }
-  wikiRes.value=searchResults
-  wikiLoading.value=false
 };
 
 
@@ -231,6 +226,12 @@ const handleBingSuggestionSelect=(suggestion:string)=>{
 const handleSuggestionsSelect=(ques:string)=>{
     question.value=ques
     handleQuestionSearch()
+}
+
+import { shell } from 'electron'
+const handleKeyWordsClick=(word:string)=>{
+    const url='https://www.bing.com/search?q='+word
+    shell.openExternal(url)
 }
 
 
@@ -337,11 +338,23 @@ onBeforeMount(()=>{
                                     </el-skeleton>
                                 </el-card>
 
-                                <div class="ml-6" style="width: 27%;" v-if="beginSearch">
+                                <div class="ml-6 flex flex-col justify-start items-start" style="width: 27%;" v-if="beginSearch">
                                     <div class="key-words-header">
                                         联想推荐
                                     </div>
-                                    <el-skeleton animated :loading="wikiLoading||keyWordsLoading">
+                                    
+                                        <el-skeleton animated :loading="keyWordsLoading">
+                                            <template #default>
+                                                <el-space wrap>
+                                                    <el-tag class="search-key-words" v-for="(word,index) in keyWords" type="info" :key="index" @click="handleKeyWordsClick(word)"> {{ word }}</el-tag>
+                                                </el-space>
+                                            </template>
+                                        </el-skeleton>
+                                    
+                                    <div class="key-words-header">
+                                        维基百科
+                                    </div>
+                                    <el-skeleton animated :loading="keyWordsLoading">
                                         <template #default>
                                             <KeyWordsLink  :keyWords="wikiRes"></KeyWordsLink>
                                         </template>
@@ -472,10 +485,21 @@ onBeforeMount(()=>{
 }
 
 .key-words-header{
-    font-size: 20px;
+    font-size: 16px;
     font-weight: bold;
     margin-bottom: 10px;
     margin-top: 10px;
+}
+
+.search-key-words{
+    transition: transform 0.1s ease-in-out; 
+}
+
+.search-key-words:hover{
+    cursor: pointer;
+    transform: scale(1.05);
+    color: #646cff;
+    text-decoration: underline;
 }
 
 </style>
