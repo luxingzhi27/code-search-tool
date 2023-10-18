@@ -250,10 +250,12 @@ const submitGptApiKey=()=>{
         })
         return
     }
-    ipcRenderer.sendSync('electron-store-set','gpt-api-key',gptApiKey.value)
-    ipcRenderer.sendSync('electron-store-set','gpt-api-key-filled',true)
-    isApiFilled.value=ipcRenderer.sendSync('electron-store-get','gpt-api-key-filled')
-    gptApiKey.value=ipcRenderer.sendSync('electron-store-get','gpt-api-key')
+    ipcRenderer.send('electron-store-set','gpt-api-key',gptApiKey.value)
+    ipcRenderer.send('electron-store-set','gpt-api-key-filled',true)
+    setTimeout(() => {
+        isApiFilled.value=ipcRenderer.sendSync('electron-store-get','gpt-api-key-filled')
+        gptApiKey.value=ipcRenderer.sendSync('electron-store-get','gpt-api-key')
+    }, 100);
 }
 
 onBeforeMount(()=>{

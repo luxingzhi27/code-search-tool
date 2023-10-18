@@ -27,14 +27,14 @@ if (process.platform === 'win32') app.setAppUserModelId(app.getName())
 import Store from 'electron-store'
 const store = new Store()
 // IPC listener
-ipcMain.on('electron-store-get', async (event, val) => {
+ipcMain.on('electron-store-get',  (event, val) => {
   event.returnValue = store.get(val);
 });
-ipcMain.on('electron-store-set', async (event, key, val) => {
+ipcMain.on('electron-store-set',  (event, key, val) => {
   store.set(key, val);
 });
 
-ipcMain.on('electron-store-clear', async (event) => {
+ipcMain.on('electron-store-clear',  (event) => {
   store.clear();
 });
 
