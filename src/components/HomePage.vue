@@ -12,6 +12,7 @@ import KeyWordsLink from './KeyWordsLink.vue';
 import {bingAutoSuggest} from '../api/bing/bingSuggestions'
 import {wikipediaSearch,SearchResult} from '../api/mediawiki/wikipediaSearch'
 import { ElScrollbar } from 'element-plus'
+import StackoverflowArticles from './SuggestArticles.vue'
 
 const programLanguages:Array<string>=['C','C++','Java','Python','JavaScript','Vue','React','Rust','Go','TypeScript','Swift','Bash','Powershell']
 const question = ref('')
@@ -76,6 +77,12 @@ const handleScroll=({scrollTop}:any)=>{
 // 监听streamingText变化，滚动到底部
 watch(streamingText, (val) => {
   if (val) {
+    if(val.length===0){
+        aiLoading.value=true
+    }
+    if(val.length>0){
+        aiLoading.value=false
+    }
     if(Math.abs(scrollTopValue.value+innerRef.value!.clientHeight-innerRef.value!.scrollHeight)<20){
         scrollbarRef.value?.setScrollTop(innerRef.value!.clientHeight);
     }
@@ -234,6 +241,10 @@ const handleKeyWordsClick=(word:string)=>{
     shell.openExternal(url)
 }
 
+const returnToHome=()=>{
+    beginSearch.value=false
+}
+
 
 onBeforeMount(()=>{
     getSuggestQuestion()
@@ -247,6 +258,9 @@ onBeforeMount(()=>{
         <el-scrollbar ref="scrollbarRef"  class="w-full" @scroll="handleScroll">
             <div ref="innerRef" class="w-full">
                 <div class="header">
+                    <div class="return-button" @click="returnToHome">
+                        <el-icon><Back /></el-icon>
+                    </div>
                     <el-dropdown @command="handleLanguageChange">
                         <div class="lang-choose">
                             <el-text>{{preferredLanguage}}</el-text>
@@ -283,7 +297,7 @@ onBeforeMount(()=>{
                     
                     <div class="w-3/4">
                         <div class="w-full mb-4 mt-5">
-                            <h2 class="text-2xl font-bold">搜索建议</h2>
+                            <h2 class="text-2xl font-bold">猜你想搜</h2>
                         </div>
                         <el-skeleton :rows="1" animated :loading="suggestQuestionsLoading">
                             <template #default>
@@ -291,8 +305,13 @@ onBeforeMount(()=>{
                             </template>
                         </el-skeleton>
                     </div>
+
+                    <div class="w-3/4" v-if="!beginSearch">
+                        <h2 class="text-2xl font-bold mb-6 mt-2">推荐文章</h2>
+                        <StackoverflowArticles/>
+                    </div>
                     
-                    <div class="w-full flex justify-center">
+                    <div class="w-full flex justify-center" v-if="beginSearch">
                         <div class="w-3/4">
                             <el-radio-group v-model="resultSource" class="mb-4 mt-3 flex justify-start w-full">
                                 <el-radio-button :label="sources.AI">{{ sources.AI }}</el-radio-button>
@@ -307,11 +326,11 @@ onBeforeMount(()=>{
                                     <template #header>
                                         <span class="flex justify-start font-bold">AI suggestions</span>
                                     </template>
-                                    <!-- <el-skeleton :rows="8" :loading="aiLoading" animated> -->
-                                        <!-- <template #default> -->
+                                    <el-skeleton :rows="5" :loading="aiLoading" animated>
+                                        <template #default>
                                             <GptResView  :text="streamingText"></GptResView>
-                                        <!-- </template> -->
-                                    <!-- </el-skeleton> -->
+                                        </template>
+                                    </el-skeleton>
                                 </el-card>
                                 
                                 <!-- web search -->
@@ -375,6 +394,27 @@ onBeforeMount(()=>{
 
 
 <style scoped>
+
+.return-button{
+    width: 35px;
+    height: 35px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-left: 8px;
+    padding-right: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+    margin: 14px;
+}
+
+.return-button:hover{
+    background-color: rgba(255,255,255,0.2);
+    cursor: pointer;
+}
+
+
 /* 使用 Tailwind CSS 样式 */
 @keyframes pulse {
   0% {
@@ -460,7 +500,8 @@ onBeforeMount(()=>{
     height: 40px;
     display: flex;
     align-items: center;
-    justify-content: end;
+    justify-content: space-between;
+    padding: 15px;
 }
 
 .bing-suggestion{
