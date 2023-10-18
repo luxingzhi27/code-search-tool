@@ -243,7 +243,8 @@ const returnToHome=()=>{
 
 
 const submitGptApiKey=()=>{
-    ipcRenderer.send('gpt-api-key',gptApiKey.value)
+    store.set('gpt-api-key',gptApiKey.value)
+    store.set('gpt-api-key-filled',true)
     setTimeout(() => {
        isApiFilled.value=store.get('gpt-api-key-filled')
        gptApiKey.value=store.get('gpt-api-key') 
@@ -276,7 +277,7 @@ onBeforeMount(()=>{
                     <div class="flex flex-wrap items-center justify-around">
                         <el-dropdown size="large">
                             <div class="lang-choose">
-                                <el-text>Api Key</el-text>
+                                <el-text>Gpt Api Key</el-text>
                                 <el-icon class="ml-2"><ArrowDown /></el-icon>
                             </div>
                             <template #dropdown>
