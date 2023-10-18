@@ -2,9 +2,6 @@ import { app, BrowserWindow, shell, ipcMain } from 'electron'
 import { release } from 'node:os'
 import { join } from 'node:path'
 
-const Store = require('electron-store')
-const store = new Store()
-
 // The built directory structure
 //
 // ├─┬ dist-electron
@@ -26,6 +23,21 @@ if (release().startsWith('6.1')) app.disableHardwareAcceleration()
 
 // Set application name for Windows 10+ notifications
 if (process.platform === 'win32') app.setAppUserModelId(app.getName())
+
+import Store from 'electron-store'
+const store = new Store()
+// IPC listener
+ipcMain.on('electron-store-get', async (event, val) => {
+  event.returnValue = store.get(val);
+});
+ipcMain.on('electron-store-set', async (event, key, val) => {
+  store.set(key, val);
+});
+
+ipcMain.on('electron-store-clear', async (event) => {
+  store.clear();
+});
+
 
 if (!app.requestSingleInstanceLock()) {
   app.quit()
@@ -67,6 +79,7 @@ async function createWindow() {
 
   // Test actively push message to the Electron-Renderer
   win.webContents.on('did-finish-load', () => {
+    console.log('[Send Main-process message]:', new Date().toLocaleString())
     win?.webContents.send('main-process-message', new Date().toLocaleString())
   })
 
@@ -100,12 +113,6 @@ app.on('activate', () => {
   } else {
     createWindow()
   }
-})
-
-
-ipcMain.on('gpt-api-key',(_,arg)=>{
-  store.set('gpt-api-key',arg)
-  store.set('gpt-api-key-filled',true)
 })
 
 // New window example arg: new windows url

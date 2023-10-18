@@ -13,11 +13,11 @@ import {bingAutoSuggest} from '../api/bing/bingSuggestions'
 import {wikipediaSearch,SearchResult} from '../api/mediawiki/wikipediaSearch'
 import { ElScrollbar } from 'element-plus'
 import StackoverflowArticles from './SuggestArticles.vue'
+import { ipcRenderer } from 'electron'
+import { ElMessage } from 'element-plus'
 
-const Store=require('electron-store')
-const store=new Store()
-const gptApiKey=ref(store.get('gpt-api-key'))
-const isApiFilled=ref(store.get('gpt-api-key-filled'))
+const gptApiKey:Ref<string>=ref(ipcRenderer.sendSync('electron-store-get','gpt-api-key'))
+const isApiFilled:Ref<boolean>=ref(ipcRenderer.sendSync('electron-store-get','gpt-api-key-filled'))
 
 const programLanguages:Array<string>=['C','C++','Java','Python','JavaScript','Vue','React','Rust','Go','TypeScript','Swift','Bash','Powershell']
 const question = ref('')
@@ -243,12 +243,17 @@ const returnToHome=()=>{
 
 
 const submitGptApiKey=()=>{
-    store.set('gpt-api-key',gptApiKey.value)
-    store.set('gpt-api-key-filled',true)
-    setTimeout(() => {
-       isApiFilled.value=store.get('gpt-api-key-filled')
-       gptApiKey.value=store.get('gpt-api-key') 
-    }, 200);
+    if(gptApiKey.value.length===0){
+        ElMessage({
+            message: 'key不能为空',
+            type: 'warning'
+        })
+        return
+    }
+    ipcRenderer.sendSync('electron-store-set','gpt-api-key',gptApiKey.value)
+    ipcRenderer.sendSync('electron-store-set','gpt-api-key-filled',true)
+    isApiFilled.value=ipcRenderer.sendSync('electron-store-get','gpt-api-key-filled')
+    gptApiKey.value=ipcRenderer.sendSync('electron-store-get','gpt-api-key')
 }
 
 onBeforeMount(()=>{
