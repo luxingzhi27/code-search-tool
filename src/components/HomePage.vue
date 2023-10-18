@@ -14,6 +14,11 @@ import {wikipediaSearch,SearchResult} from '../api/mediawiki/wikipediaSearch'
 import { ElScrollbar } from 'element-plus'
 import StackoverflowArticles from './SuggestArticles.vue'
 
+const Store=require('electron-store')
+const store=new Store()
+const gptApiKey=ref(store.get('gpt-api-key'))
+const isApiFilled=ref(store.get('gpt-api-key-filled'))
+
 const programLanguages:Array<string>=['C','C++','Java','Python','JavaScript','Vue','React','Rust','Go','TypeScript','Swift','Bash','Powershell']
 const question = ref('')
 const preferredLanguage = ref(programLanguages[0])
@@ -65,7 +70,7 @@ watch(question,(newVal)=>{
 })
 
 
-const { msgList, streaming, streamingText, stream } = useGpt('ae27403c9624903838b63b16f406931e', false)
+const { msgList, streaming, streamingText, stream } = useGpt(gptApiKey.value, false)
 
 const innerRef = ref<HTMLDivElement>()
 const scrollbarRef = ref<InstanceType<typeof ElScrollbar>>()
@@ -101,15 +106,6 @@ const handleQuestionSearch = async () => {
     })){
         prompt=`假设你是一个帮助我学习代码的助手,下面我将提出一个问题,请你给出三个例子}`
     }
-    // getGptResponse({
-    //     'messages':[
-    //         {'role':'user','content':prompt},
-    //         {'role':'user','content':content}
-    //     ]
-    // }).then((res:string)=>{
-    //     gptResponse.value=res
-    //     aiLoading.value=false
-    // })
     stream(prompt+'\n'+content)
 
 
@@ -170,7 +166,7 @@ const getKeyWordsFromGpt=async (question:string):Promise<string[]>=>{
         'messages':[
             {'role':'user','content':prompt},
         ]
-    }).then((res:string)=>{
+    },gptApiKey.value).then((res:string)=>{
         const getWords=(res:string):string[]=>{
             const regex = /{([^}]+)}/g;
             const words=res.match(regex)
@@ -199,7 +195,7 @@ const getSuggestQuestion=(question:string='')=>{
         'messages':[
             {'role':'user','content':prompt},
         ]
-    }).then((res:string)=>{
+    },gptApiKey.value).then((res:string)=>{
         const getQuestions=async (res:string):Promise<string[]>=>{
             const regex = /{([^}]+)}/g;
             const questions=res.match(regex)
@@ -246,6 +242,14 @@ const returnToHome=()=>{
 }
 
 
+const submitGptApiKey=()=>{
+    ipcRenderer.send('gpt-api-key',gptApiKey.value)
+    setTimeout(() => {
+       isApiFilled.value=store.get('gpt-api-key-filled')
+       gptApiKey.value=store.get('gpt-api-key') 
+    }, 200);
+}
+
 onBeforeMount(()=>{
     getSuggestQuestion()
 })
@@ -255,23 +259,45 @@ onBeforeMount(()=>{
 
 <template>
     <div class="flex w-full h-full">
-        <el-scrollbar ref="scrollbarRef"  class="w-full" @scroll="handleScroll">
+        <div class="flex w-full h-full justify-center items-center flex-col" v-if="!isApiFilled">
+            <h1 class="my-5">还没有填写gpt的api key喔~</h1>
+            <p class="my-5">请前往http://gpt.zhizengzeng.com/ 购买api key</p>
+            <div class="flex justify-center items-center w-2/3">
+                <el-input v-model="gptApiKey" class="my-2 ml-2 mr-1" placeholder="enter your gpt api key"></el-input>
+                <button class="my-2 ml-1 mr-2" @click="submitGptApiKey">OK</button>
+            </div>
+        </div>
+        <el-scrollbar ref="scrollbarRef"  class="w-full" @scroll="handleScroll" v-if="isApiFilled">
             <div ref="innerRef" class="w-full">
                 <div class="header">
                     <div class="return-button" @click="returnToHome">
                         <el-icon><Back /></el-icon>
                     </div>
-                    <el-dropdown @command="handleLanguageChange">
-                        <div class="lang-choose">
-                            <el-text>{{preferredLanguage}}</el-text>
-                            <el-icon class="ml-2"><ArrowDown /></el-icon>
-                        </div>
-                        <template #dropdown>
-                            <el-dropdown-menu>
-                                <el-dropdown-item v-for="(lang,index) in programLanguages" :key="index" :command="lang">{{lang}}</el-dropdown-item>
-                            </el-dropdown-menu>
-                        </template>
-                    </el-dropdown>
+                    <div class="flex flex-wrap items-center justify-around">
+                        <el-dropdown size="large">
+                            <div class="lang-choose">
+                                <el-text>Api Key</el-text>
+                                <el-icon class="ml-2"><ArrowDown /></el-icon>
+                            </div>
+                            <template #dropdown>
+                                <div class="flex justify-around items-center">
+                                    <el-input v-model="gptApiKey" class="my-2 ml-2 mr-1" placeholder="enter your gpt api key"></el-input>
+                                    <button class="my-2 ml-1 mr-2" @click="submitGptApiKey">OK</button>
+                                </div>
+                            </template>
+                        </el-dropdown>
+                        <el-dropdown @command="handleLanguageChange">
+                            <div class="lang-choose">
+                                <el-text>{{preferredLanguage}}</el-text>
+                                <el-icon class="ml-2"><ArrowDown /></el-icon>
+                            </div>
+                            <template #dropdown>
+                                <el-dropdown-menu>
+                                    <el-dropdown-item v-for="(lang,index) in programLanguages" :key="index" :command="lang">{{lang}}</el-dropdown-item>
+                                </el-dropdown-menu>
+                            </template>
+                        </el-dropdown>
+                    </div>
                 </div>
                 <div class="flex flex-col h-screen items-center w-full">
                     <div class="flex justify-start items-center w-3/4 mt-1 mb-2">

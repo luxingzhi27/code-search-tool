@@ -1,15 +1,14 @@
 import axios from 'axios'
 
-const api_secret_key='ae27403c9624903838b63b16f406931e'
 
-export const getGptResponse = (params:any) => {
+export const getGptResponse = (params:any,key:string) => {
     return axios({
         method:'post',
         url:'http://flag.smarttrot.com/index.php/api/v1/chat/completions',
         data:params,
         headers:{
             'Content-Type':'application/json',
-            'Authorization':'Bearer '+api_secret_key
+            'Authorization':'Bearer '+key
         }
     }).then(res=>{
         if(res.status===200&&res.data){

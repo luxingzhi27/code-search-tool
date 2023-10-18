@@ -2,6 +2,9 @@ import { app, BrowserWindow, shell, ipcMain } from 'electron'
 import { release } from 'node:os'
 import { join } from 'node:path'
 
+const Store = require('electron-store')
+const store = new Store()
+
 // The built directory structure
 //
 // ├─┬ dist-electron
@@ -97,6 +100,12 @@ app.on('activate', () => {
   } else {
     createWindow()
   }
+})
+
+
+ipcMain.on('gpt-api-key',(_,arg)=>{
+  store.set('gpt-api-key',arg)
+  store.set('gpt-api-key-filled',true)
 })
 
 // New window example arg: new windows url

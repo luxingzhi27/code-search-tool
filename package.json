@@ -46,6 +46,7 @@
     "@traptitech/markdown-it-katex": "^3.6.0",
     "@vueuse/core": "^10.5.0",
     "axios": "^1.5.1",
+    "electron-store": "^8.1.0",
     "element-plus": "^2.3.14",
     "highlight.js": "^11.9.0",
     "loadsh": "^0.0.4",
