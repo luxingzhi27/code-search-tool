@@ -3,9 +3,9 @@
  */
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "luxingzhi.code-search-tool",
+  "appId": "com.luxingzhi.code-search-tool",
   "asar": true,
-  "productName": "code-search-tool",
+  "productName": "CodeSearch",
   "directories": {
     "output": "release/${version}"
   },
@@ -17,7 +17,7 @@
     "target": [
       "dmg"
     ],
-    "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
+    "artifactName": "${productName}-Mac-${version}-Installer.${ext}",
   },
   "win": {
     "target": [
@@ -29,7 +29,7 @@
         ]
       }
     ],
-    "artifactName": "${productName}-Windows-${version}-Setup.${ext}"
+    "artifactName": "${productName}-Windows-${version}-Setup.${ext}",
   },
   "nsis": {
     "oneClick": false,
@@ -43,6 +43,6 @@
       "deb",
       "rpm"
     ],
-    "artifactName": "${productName}-Linux-${version}.${ext}"
+    "artifactName": "${productName}-Linux-${version}.${ext}",
   }
 }

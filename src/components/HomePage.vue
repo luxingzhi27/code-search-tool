@@ -17,9 +17,11 @@ import { ipcRenderer } from 'electron'
 import { ElMessage } from 'element-plus'
 
 const gptApiKey:Ref<string>=ref(ipcRenderer.sendSync('electron-store-get','gpt-api-key'))
-const isApiFilled:Ref<boolean>=ref(ipcRenderer.sendSync('electron-store-get','gpt-api-key-filled'))
+const isGptApiFilled:Ref<boolean>=ref(ipcRenderer.sendSync('electron-store-get','gpt-api-key-filled'))
+const isBingApiFilled:Ref<boolean>=ref(ipcRenderer.sendSync('electron-store-get','bing-api-key-filled'))
+const bingApiKey:Ref<string>=ref(ipcRenderer.sendSync('electron-store-get','bing-api-key'))
 
-const programLanguages:Array<string>=['C','C++','Java','Python','JavaScript','Vue','React','Rust','Go','TypeScript','Swift','Bash','Powershell']
+const programLanguages:Array<string>=['C','C++','Java','Python','C#','JavaScript','Vue','React','Rust','Go','TypeScript','Swift','Bash','Powershell']
 const question = ref('')
 const preferredLanguage = ref(programLanguages[0])
 const gptResponse=ref('这里空空如也~')
@@ -93,7 +95,7 @@ const webPageSize=ref(10)
 
 const handleWebPageChange=()=>{
     webLoading.value=true
-    bingWebSearch(question.value+`${preferredLanguage.value}`,webCurrentPage.value,webPageSize.value).then((res)=>{
+    bingWebSearch(question.value+`${preferredLanguage.value}`,webCurrentPage.value,webPageSize.value,bingApiKey.value).then((res)=>{
         if(res.length>0){
             webSearchResults.value=res
             webLoading.value=false
@@ -144,11 +146,11 @@ const handleQuestionSearch = async () => {
 
     getSuggestQuestion(question.value)
 
-    bingWebSearchSize(question.value+` ${preferredLanguage.value}`).then((res)=>{
+    bingWebSearchSize(question.value+` ${preferredLanguage.value}`,bingApiKey.value).then((res)=>{
         webTotalCount.value=res
     })
 
-    bingWebSearch(question.value+` ${preferredLanguage.value}`,webCurrentPage.value,webPageSize.value).then((res)=>{
+    bingWebSearch(question.value+` ${preferredLanguage.value}`,webCurrentPage.value,webPageSize.value,bingApiKey.value).then((res)=>{
         if(res.length>0){
             webSearchResults.value=res
             webLoading.value=false
@@ -184,6 +186,7 @@ const handleQuestionSearch = async () => {
 }
 
 const getWikiRes = async () => {
+  wikiRes.value = [];
   for (const word of keyWords.value) {
     try {
       wikipediaSearch(word).then((res)=>{
@@ -201,7 +204,7 @@ const getWikiRes = async () => {
 //TODO: 响应异常处理
 const getKeyWordsFromGpt=async (question:string):Promise<string[]>=>{
     keyWordsLoading.value=true
-    let prompt=`假设你是搜索引擎助手,我给出问题,请你用中文给出不超过10个这个问题有关编程技术的相关联想关键词,而不是编程语言的语法关键词,每一个关键词单独用{}括起来,问题的内容是${question}`
+    let prompt=`假设你是搜索引擎助手,我给出问题,请你用中文给出不超过10个这个问题有关编程技术的相关联想关键词,而不是编程语言的语法关键词,每一个关键词单独用{}括起来,例如{关键词1},{关键词2}...,问题的内容是${question}`
     return getGptResponse({
         'messages':[
             {'role':'user','content':prompt},
@@ -293,8 +296,24 @@ const submitGptApiKey=()=>{
     ipcRenderer.send('electron-store-set','gpt-api-key',gptApiKey.value)
     ipcRenderer.send('electron-store-set','gpt-api-key-filled',true)
     setTimeout(() => {
-        isApiFilled.value=ipcRenderer.sendSync('electron-store-get','gpt-api-key-filled')
+        isGptApiFilled.value=ipcRenderer.sendSync('electron-store-get','gpt-api-key-filled')
         gptApiKey.value=ipcRenderer.sendSync('electron-store-get','gpt-api-key')
+    }, 100);
+}
+
+const submitBingApiKey=()=>{
+    if (bingApiKey.value.length===0) {
+        ElMessage({
+            message: 'key不能为空',
+            type: 'warning'
+        })
+        return
+    }
+    ipcRenderer.send('electron-store-set','bing-api-key',bingApiKey.value)
+    ipcRenderer.send('electron-store-set','bing-api-key-filled',true)
+    setTimeout(() => {
+        isBingApiFilled.value=ipcRenderer.sendSync('electron-store-get','bing-api-key-filled')
+        bingApiKey.value=ipcRenderer.sendSync('electron-store-get','bing-api-key')
     }, 100);
 }
 
@@ -308,15 +327,22 @@ onBeforeMount(()=>{
 
 <template>
     <div class="flex w-full h-full">
-        <div class="flex w-full h-full justify-center items-center flex-col" v-if="!isApiFilled">
-            <h1 class="my-5">还没有填写gpt的api key喔~</h1>
-            <p class="my-5">请前往http://gpt.zhizengzeng.com/ 购买api key</p>
+        <div class="flex w-full h-full justify-center items-center flex-col" v-if="!isGptApiFilled||!isBingApiFilled">
+            <h1 class="my-5">还没有填写gpt与bing搜索的api key喔~</h1>
+            <p class="my-5">请前往http://gpt.zhizengzeng.com/ 购买gpt api key</p>
+            <p class="my-5">请前往https://portal.azure.com/注册Azure账户获得bing api key</p>
             <div class="flex justify-center items-center w-2/3">
-                <el-input v-model="gptApiKey" class="my-2 ml-2 mr-1" placeholder="enter your gpt api key"></el-input>
+                <label for="gpt-api-key-input">gpt</label>
+                <el-input id="gpt-api-key-input" v-model="gptApiKey" @keyup.enter.native="submitGptApiKey" class="my-2 ml-2 mr-1" placeholder="enter your gpt api key"></el-input>
                 <button class="my-2 ml-1 mr-2" @click="submitGptApiKey">OK</button>
             </div>
+            <div class="flex justify-center items-center w-2/3">
+                <label for="bing-api-key-input">bing</label>
+                <el-input id="bing-api-key-input" v-model="bingApiKey" @keyup.enter.native="submitBingApiKey" class="my-2 ml-2 mr-1" placeholder="enter your bing api key"></el-input>
+                <button class="my-2 ml-1 mr-2" @click="submitBingApiKey">OK</button>
+            </div>
         </div>
-        <el-scrollbar ref="scrollbarRef"  class="w-full" @scroll="handleScroll" v-if="isApiFilled">
+        <el-scrollbar ref="scrollbarRef"  class="w-full" @scroll="handleScroll" v-if="isGptApiFilled&&isBingApiFilled">
             <div ref="innerRef" class="w-full">
                 <div class="header">
                     <div class="return-button" @click="returnToHome">
@@ -329,9 +355,17 @@ onBeforeMount(()=>{
                                 <el-icon class="ml-2"><ArrowDown /></el-icon>
                             </div>
                             <template #dropdown>
-                                <div class="flex justify-around items-center">
-                                    <el-input v-model="gptApiKey" class="my-2 ml-2 mr-1" placeholder="enter your gpt api key"></el-input>
-                                    <button class="my-2 ml-1 mr-2" @click="submitGptApiKey">OK</button>
+                                <div class="flex flex-col justify-center items-start p-4">
+                                    <div class="flex justify-around items-center">
+                                        <span>gpt</span>
+                                        <el-input v-model="gptApiKey" @keyup.enter="submitGptApiKey" class="my-2 ml-2 mr-1" placeholder="enter your gpt api key"></el-input>
+                                        <button class="my-2 ml-1 mr-2" @click="submitGptApiKey">OK</button>
+                                    </div>
+                                    <div class="flex justify-around items-center">
+                                        <span>bing</span>
+                                        <el-input v-model="bingApiKey" @keyup.enter="submitBingApiKey" class="my-2 ml-2 mr-1" placeholder="enter your bing api key"></el-input>
+                                        <button class="my-2 ml-1 mr-2" @click="submitBingApiKey">OK</button>
+                                    </div>
                                 </div>
                             </template>
                         </el-dropdown>
@@ -357,6 +391,7 @@ onBeforeMount(()=>{
                                 clearable
                                 @focus="showBingSuggestions=true"
                                 @blur="showBingSuggestions=false"
+                                @keyup.enter.native="handleQuestionSearch"
                             >
                                 <template #prefix><el-icon><Search/></el-icon></template>
                             </el-input>

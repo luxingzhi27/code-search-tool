@@ -1,9 +1,5 @@
 import axios from "axios"
-const SUBSCRIPTION_KEY = '55bdb6fb0e824613b1c441edb32500d7'
-if (!SUBSCRIPTION_KEY) {
-  throw new Error('Missing the AZURE_SUBSCRIPTION_KEY environment variable')
-}
-export const bingWebSearch=(query:any,page:number,pagesize:number)=>{
+export const bingWebSearch=(query:any,page:number,pagesize:number,SUBSCRIPTION_KEY:string)=>{
   return axios({
     method:'get',
     url:'https://api.bing.microsoft.com/v7.0/search?q='+encodeURIComponent(query)+`&page=${page}&pagesize=${pagesize}`,
@@ -20,13 +16,15 @@ export const bingWebSearch=(query:any,page:number,pagesize:number)=>{
         }
       })
       return pages
+    }else if(res.status===403){
+      return []
     }else{
       return []
     }
   })
 }
 
-export const bingWebSearchSize=(query:any)=>{
+export const bingWebSearchSize=(query:any,SUBSCRIPTION_KEY:string)=>{
   return axios({
     method:'get',
     url:'https://api.bing.microsoft.com/v7.0/search?q='+encodeURIComponent(query),
