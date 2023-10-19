@@ -44,3 +44,17 @@ export const githubSearchRepo = (query:string,lang:string,page:number,perPage:nu
     }
   })
 }
+
+export const githubSearchRepoSize = (query:string,lang:string) => {
+  const url = `https://api.github.com/search/repositories?q=`+encodeURIComponent(query)+`+language:`+encodeURIComponent(lang)
+  return axios({
+    method:'get',
+    url:url,
+  }).then((res:any)=>{
+    if(res.status===200&&res.data){
+      return res.data.total_count
+    }else{
+      return -1
+    }
+  })
+}

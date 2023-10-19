@@ -2,8 +2,8 @@
 import { ref, watch ,reactive, onMounted,Ref,onBeforeMount, nextTick} from 'vue'
 import { getGptResponse } from '../api/gpt/gpt'
 import { useGpt } from '../api/gpt/GptStreamVue'
-import {bingWebSearch} from '../api/bing/bingSearch'
-import {githubSearchRepo} from '../api/github/githubRepo'
+import {bingWebSearch,bingWebSearchSize} from '../api/bing/bingSearch'
+import {githubSearchRepo,githubSearchRepoSize} from '../api/github/githubRepo'
 import Weblink from './Weblink.vue';
 import GptResView from './GptResView.vue';
 import GithubReposView from './GithubReposView.vue';
@@ -69,6 +69,39 @@ watch(question,(newVal)=>{
     }
 })
 
+//github分页
+const githubCurrentPage=ref(1)
+const githubTotalCount=ref(0)
+const githubPageSize=ref(10)
+
+const handleGithubPageChange=()=>{
+    githubLoading.value=true
+    githubSearchRepo(keyWords.value[0],preferredLanguage.value,githubCurrentPage.value,githubPageSize.value).then((res)=>{
+        if(res.length>0){
+            githubSearchResults.value=res
+            githubLoading.value=false
+        }else{
+            githubLoading.value=false
+        }
+    })
+}
+
+//web搜索分页
+const webCurrentPage=ref(1)
+const webTotalCount=ref(0)
+const webPageSize=ref(10)
+
+const handleWebPageChange=()=>{
+    webLoading.value=true
+    bingWebSearch(question.value+`${preferredLanguage.value}`,webCurrentPage.value,webPageSize.value).then((res)=>{
+        if(res.length>0){
+            webSearchResults.value=res
+            webLoading.value=false
+        }else{
+            webLoading.value=false
+        }
+    })
+}
 
 const { msgList, streaming, streamingText, stream } = useGpt(gptApiKey.value, false)
 
@@ -111,7 +144,11 @@ const handleQuestionSearch = async () => {
 
     getSuggestQuestion(question.value)
 
-    bingWebSearch(question.value+`${preferredLanguage.value}`).then((res)=>{
+    bingWebSearchSize(question.value+` ${preferredLanguage.value}`).then((res)=>{
+        webTotalCount.value=res
+    })
+
+    bingWebSearch(question.value+` ${preferredLanguage.value}`,webCurrentPage.value,webPageSize.value).then((res)=>{
         if(res.length>0){
             webSearchResults.value=res
             webLoading.value=false
@@ -131,7 +168,10 @@ const handleQuestionSearch = async () => {
             if(keyWords.value.length>1){
                 githubSearchPrompt=keyWords.value[0]
             }
-            githubSearchRepo(githubSearchPrompt,preferredLanguage.value,1,10).then((res)=>{
+            githubSearchRepoSize(githubSearchPrompt,preferredLanguage.value).then((res)=>{
+                githubTotalCount.value=res
+            })
+            githubSearchRepo(githubSearchPrompt,preferredLanguage.value,1,githubPageSize.value).then((res)=>{
                 if(res.length>0){
                     githubSearchResults.value=res
                     githubLoading.value=false
@@ -258,6 +298,7 @@ const submitGptApiKey=()=>{
     }, 100);
 }
 
+
 onBeforeMount(()=>{
     getSuggestQuestion()
 })
@@ -373,10 +414,23 @@ onBeforeMount(()=>{
                                         <span class="flex justify-start font-bold">Web search</span>
                                     </template>
                                     <el-skeleton :rows="8" :loading="webLoading" animated>
+                                        <template #template>
+                                            <div class="github-loading-skeleton">
+                                                <div class="github-loading-skeleton-single" v-for="(index) in 10" :key="index">
+                                                    <el-skeleton-item variant="p" class="mt-1.5 mb-2" style="width: 80%;"></el-skeleton-item>
+                                                    <el-skeleton-item variant="text" class="my-1.5" style="width: 33%;"></el-skeleton-item>
+                                                    <el-skeleton-item variant="text" class="my-1.5" style="width: 100%;"></el-skeleton-item>
+                                                    <el-skeleton-item variant="text" class="my-1.5" style="width: 45%;"></el-skeleton-item>
+                                                </div>
+                                            </div>
+                                        </template>
                                         <template #default>
                                             <Weblink :links="webSearchResults"></Weblink>
                                         </template>
                                     </el-skeleton>
+                                    <div class="flex justify-center items-center">
+                                        <el-pagination :total="webTotalCount" v-model:current-page="webCurrentPage" v-model:page-size="webPageSize" layout="prev,pager,next" @current-change="handleWebPageChange"></el-pagination>
+                                    </div>
                                 </el-card>
 
                                 <!-- github search -->
@@ -384,11 +438,23 @@ onBeforeMount(()=>{
                                     <template #header>
                                         <span class="flex justify-start font-bold">Github search</span>
                                     </template>
-                                    <el-skeleton :rows="8" :loading="githubLoading" animated>
+                                    <el-skeleton :loading="githubLoading" animated>
+                                        <template #template>
+                                            <div class="github-loading-skeleton">
+                                                <div class="github-loading-skeleton-single" v-for="(index) in 10" :key="index">
+                                                    <el-skeleton-item variant="text" class="my-1.5" style="width: 20%;"></el-skeleton-item>
+                                                    <el-skeleton-item variant="text" class="my-1.5" style="width: 100%;"></el-skeleton-item>
+                                                    <el-skeleton-item variant="text" class="my-1.5" style="width: 33%;"></el-skeleton-item>
+                                                </div>
+                                            </div>
+                                        </template>
                                         <template #default>
                                             <GithubReposView :repos="githubSearchResults"></GithubReposView>
                                         </template>
                                     </el-skeleton>
+                                    <div class="flex justify-center items-center">
+                                        <el-pagination :total="githubTotalCount" v-model:current-page="githubCurrentPage" v-model:page-size="githubPageSize" layout="prev,pager,next" @current-change="handleGithubPageChange"></el-pagination>
+                                    </div>
                                 </el-card>
 
                                 <div class="ml-6 flex flex-col justify-start items-start" style="width: 27%;" v-if="beginSearch">
@@ -575,6 +641,32 @@ onBeforeMount(()=>{
     transform: scale(1.05);
     color: #646cff;
     text-decoration: underline;
+}
+
+.github-loading-skeleton{
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    justify-content: center;
+    width: 100%;
+    margin-top: 4px;
+    margin-bottom: 10px;
+}
+
+.github-loading-skeleton-single{
+    background-color: #1a1a1a;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: start;
+    padding-top: 8px;
+    padding-bottom: 12px;
+    padding-left: 5px;
+    padding-right: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    width: 100%;
 }
 
 </style>
