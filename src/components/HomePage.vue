@@ -24,7 +24,6 @@ const bingApiKey:Ref<string>=ref(ipcRenderer.sendSync('electron-store-get','bing
 const programLanguages:Array<string>=['C','C++','Java','Python','C#','JavaScript','Vue','React','Rust','Go','TypeScript','Swift','Bash','Powershell']
 const question = ref('')
 const preferredLanguage = ref(programLanguages[0])
-const gptResponse=ref('这里空空如也~')
 const webSearchResults=ref([{snippet:'',name:'这里空空如也~',url:'https://www.bing.com'}])
 const githubSearchResults=ref([{full_name:'',description:'',url:'',stars:-3,updated_at:''}])
 
@@ -70,6 +69,11 @@ watch(question,(newVal)=>{
         searchBingSuggestions.value=[]
     }
 })
+
+watch(preferredLanguage,(newVal)=>{
+    handleQuestionSearch()
+})
+
 
 //github分页
 const githubCurrentPage=ref(1)
@@ -191,7 +195,16 @@ const getWikiRes = async () => {
     try {
       wikipediaSearch(word).then((res)=>{
         if (res) {
-            wikiRes.value.push(res);
+            let flag=false
+            wikiRes.value.forEach((wiki)=>{
+                if(wiki.key===res.key){
+                    flag=true
+                    return
+                }
+            })
+            if(flag===false){
+                wikiRes.value.push(res);
+            }
         }
       });
     } catch (error) {
@@ -389,7 +402,10 @@ onBeforeMount(()=>{
                                 placeholder="请输入您的问题"
                                 v-model="question"
                                 clearable
-                                @focus="showBingSuggestions=true"
+                                @focus="()=>{
+                                    showBingSuggestions=true
+                                    getBingSuggestions(question)
+                                }"
                                 @blur="showBingSuggestions=false"
                                 @keyup.enter.native="handleQuestionSearch"
                             >
