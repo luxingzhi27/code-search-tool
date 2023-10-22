@@ -351,7 +351,7 @@ onBeforeMount(()=>{
                     <div class="flex flex-wrap items-center justify-around">
                         <el-dropdown size="large">
                             <div class="lang-choose">
-                                <el-text>Gpt Api Key</el-text>
+                                <el-text>Api Key</el-text>
                                 <el-icon class="ml-2"><ArrowDown /></el-icon>
                             </div>
                             <template #dropdown>
@@ -395,8 +395,8 @@ onBeforeMount(()=>{
                             >
                                 <template #prefix><el-icon><Search/></el-icon></template>
                             </el-input>
-                            <div v-if="showBingSuggestions && searchBingSuggestions.length>0" class="flex flex-col justify-start items-start p-2" 
-                                style="background-color: #1a1a1a;border-radius: 8px;position: absolute;z-index: 999; width: 100%; top: 40px">
+                            <div v-if="showBingSuggestions&&searchBingSuggestions.length>0" class="flex flex-col justify-start items-start p-2" 
+                                style="background-color: rgba(26,26,26,0.9);backdrop-filter: blur(8px); border-radius: 8px;position: absolute;z-index: 999; width: 100%; top: 40px">
                                 <div  class="bing-suggestion" v-for="(suggestion,index) in searchBingSuggestions" :key="index" @mousedown.prevent="handleBingSuggestionSelect(suggestion)">
                                     {{ suggestion }}
                                 </div>
