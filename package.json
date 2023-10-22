@@ -1,5 +1,5 @@
 {
-  "name": "code-search-tool",
+  "name": "codehub",
   "version": "2.0.0",
   "main": "dist-electron/main/index.js",
   "description": "A simple code search tool with gpt ai help",

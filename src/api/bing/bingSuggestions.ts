@@ -1,16 +1,11 @@
 import axios from 'axios';
 
-const SUBSCRIPTION_KEY = '55bdb6fb0e824613b1c441edb32500d7'
-if (!SUBSCRIPTION_KEY) {
-  throw new Error('Missing the AZURE_SUBSCRIPTION_KEY environment variable')
-}
-
-export const bingAutoSuggest = async (query: string): Promise<string[]> => {
+export const bingAutoSuggest = async (query: string,key:string): Promise<string[]> => {
   return axios({
     method: 'get',
     url: `https://api.bing.microsoft.com/v7.0/suggestions?q=${encodeURIComponent(query)}`,
     headers: {
-      'Ocp-Apim-Subscription-Key': SUBSCRIPTION_KEY,
+      'Ocp-Apim-Subscription-Key': key,
     },
   }).then((res) => {
     if (res.status === 200 && res.data && res.data.suggestionGroups) {

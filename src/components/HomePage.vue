@@ -243,7 +243,7 @@ const getKeyWordsFromGpt=async (question:string):Promise<string[]>=>{
 //TODO: 响应异常处理
 const getSuggestQuestion=(question:string='')=>{
     suggestQuestionsLoading.value=true
-    let prompt=`假设你是搜索引擎助手,我给出问题,请你给出这个问题的6个相关联想问题,每一个联想问题单独用{}括起来,例如{如何解析json文件},请不要包含任何多余的内容,我要问的问题的内容是${question}`
+    let prompt=`假设你是搜索引擎助手,我给出问题,请你给出6个我接下来可能会问的相关联想问题,每一个联想问题单独用{}括起来,例如{如何解析json文件},请不要包含任何多余的内容,我要问的问题的内容是${question}`
     if(question.length===0){
         prompt=`请给我6个有关于编程技术方面的问题,问题用{}单独括起来,例如{如何解析json文件},请不要包含任何多余的内容`
     }
@@ -270,7 +270,7 @@ const getSuggestQuestion=(question:string='')=>{
 
  
 const getBingSuggestions=(question:string)=>{
-    bingAutoSuggest(question).then((res)=>{
+    bingAutoSuggest(question,bingApiKey.value).then((res)=>{
         searchBingSuggestions.value=res
     })
 }
