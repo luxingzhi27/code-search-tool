@@ -191,7 +191,7 @@ async fetch(messages: GptMsgs) {
   }
 ```
 
-同时发起请求后，需要从response中通过`getReader`方法获取`reader`，同时通过通过while循环 + `reader.read()`获取每次传输的数据，每次获取的数据格式为`Uint8Array`，通过浏览器原生支持的`TextDecoder`将buffer解析成字符串，再通过正则表达式匹配其中的`json`数据
+同时发起请求后，需要从response中通过`getReader`方法获取`reader`，同时通过while循环 + `reader.read()`获取每次传输的数据，每次获取的数据格式为`Uint8Array`，通过浏览器原生支持的`TextDecoder`将buffer解析成字符串，再通过正则表达式匹配其中的`json`数据
 
 ```javascript
 const parsePack = (str: string) => {
