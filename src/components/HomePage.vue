@@ -23,7 +23,7 @@ const bingApiKey:Ref<string>=ref(ipcRenderer.sendSync('electron-store-get','bing
 
 const programLanguages:Array<string>=['C','C++','Java','Python','C#','JavaScript','Vue','React','Rust','Go','TypeScript','Swift','Bash','Powershell']
 const question = ref('')
-const preferredLanguage = ref(programLanguages[0])
+const preferredLanguage = ref(programLanguages[2])
 const webSearchResults=ref([{snippet:'',name:'这里空空如也~',url:'https://www.bing.com'}])
 const githubSearchResults=ref([{full_name:'',description:'',url:'',stars:-3,updated_at:''}])
 
